@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 #ebnf = "0.1.4"
 ebnf = { git = "https://github.com/torao/ebnf" }
+toml = "*"
