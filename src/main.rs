@@ -2,6 +2,12 @@ use std::io::Read;
 
 use ebnf::{io::MarkableReader, parser::Parser, Syntax};
 
+// TODO: Potential future nice things
+// * Selective rule checking, give the name of a single rule and provide negative and positive examples (one check file?)
+// * Amount of rules tested and passed overview
+// * Better display of the errors
+// * Finish ProForma definition
+
 fn main() {
     // Parse EBNF
     let mut definition_file = String::new();

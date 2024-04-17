@@ -10,8 +10,10 @@ WS = [" "];
 CROSSLINK = "//";
 CHIMERIC = "+";
 
-main = {proteoform, (CROSSLINK | CHIMERIC)}, proteoform;
-proteoform = peptide, ["/", charge];
+(* Main entry point *)
+main = {proteoform, CHIMERIC}, proteoform;
+proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
+linearPeptide = peptide, [charge];
 
 peptide = {modGlobal}, {modUnknownPos}, {modLabile}, [modNTerm], {aa | modRange}, [modCTerm];
 
@@ -58,8 +60,7 @@ ModLabelBranch = "BRANCH";
 ModLabel = {LETTER | DIGIT};
 ModScore = SIGNEDNUMBER;
 
-charge = CHARGE, [ModL, ion, ModR];
-CHARGE = SIGNEDINT;
+charge = "/", SIGNEDINT, [ModL, ion, ModR];
 ion = [TEXT, ","], TEXT;
 
 TEXT = {LETTER|" "|DIGIT};
