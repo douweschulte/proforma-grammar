@@ -2,10 +2,11 @@ DIGIT = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9";
 INT = DIGIT, {DIGIT};
 SIGN = "+"|"-";
 SIGNEDINT = [SIGN], INT;
+SIGNORSIGNEDINT = SIGNEDINT | SIGN;
 NUMBER = INT, [".", INT];
 SIGNEDNUMBER = [SIGN], INT, [".", INT];
 LETTER = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z";
-WS = [" "];
+WS = {" "};
 
 CROSSLINK = "//";
 CHIMERIC = "+";
@@ -28,7 +29,7 @@ modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
 mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
 modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
 MODCOUNT = INT;
-modInternal = modName | modAccession | modMass | modFormula | modGlycan | info;
+modInternal = modMass | modAccession | modName | | modFormula | modGlycan | info;
 
 modNTerm = (mod | (ModL, modLabel, ModR)), "-";
 modCTerm = "-", (mod | (ModL, modLabel, ModR));
@@ -36,7 +37,8 @@ modCTerm = "-", (mod | (ModL, modLabel, ModR));
 modRange = ModRangeL, modRangePos, ModRangeR, {mod};
 modRangePos = {aa | modRange};
 
-modName = [(CVAbbreviation | CVAbbreviationOpt), ":"], TEXT;
+modName = [modNameCV, ":"], TEXT;
+modNameCV = CVAbbreviation | CVAbbreviationOpt;
 
 CVAbbreviationOpt = "U" | "M";
 CVAbbreviation = "R" | "X" | "G";
@@ -44,10 +46,13 @@ CVAbbreviation = "R" | "X" | "G";
 modAccession = CVName, ":", TEXT;
 CVName = "UNIMOD" | "MOD" | "RESID" | "XLMOD" | "GNO";
 
-modMass = [(CVAbbreviationOpt | CVAbbreviation | CVName | "Obs"), ":"], SIGNEDNUMBER;
+modMass = [modMassCV, ":"], SIGNEDNUMBER;
+modMassCV = CVAbbreviationOpt | CVAbbreviation  | "Obs";
 
-modFormula = "Formula:", FORMULA;
-FORMULA = {(ModL, SIGNEDINT, ELEMENT, [SIGNEDINT], ModR) | (ELEMENT, WS, [SIGNEDINT], WS)};
+modFormula = "Formula:", formula;
+formula = {(WS, ModL, WS, INT, WS, ELEMENT, WS, [INT], WS, ModR) | (WS, ELEMENT, WS, [INT], WS)};
+formulaWithElectrons = {(WS, ModL, WS, INT, WS, elementOrElectron, WS, [INT], WS, ModR) | (WS, elementOrElectron, WS, [INT], WS)};
+elementOrElectron = ELEMENT | "e";
 
 modGlycan = "Glycan:", {monosaccharide, WS};
 monosaccharide = MONOSACCHARIDE, [INT];
@@ -60,8 +65,8 @@ ModLabelBranch = "BRANCH";
 ModLabel = {LETTER | DIGIT};
 ModScore = SIGNEDNUMBER;
 
-charge = "/", SIGNEDINT, [ModL, ion, ModR];
-ion = [TEXT, ","], TEXT;
+charge = "/", SIGNEDINT, [ModL, {adductIon, ","}, adductIon, ModR];
+adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
 
 TEXT = {LETTER|" "|DIGIT};
 

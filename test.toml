@@ -44,7 +44,7 @@ positive = [
     "[U:+1]",
     "[+23.092]",
     "[-23.092]",
-    "[14|Obs:+14|Unimod:0034|U:methyl]"
+    "[14|Obs:+14|UNIMOD:0034|U:methyl]",
 ]
 
 [modMass] 
@@ -55,4 +55,40 @@ positive = [
     "+23.0",
     "U:23",
     "Obs:23",
+]
+
+[formula]
+positive = [
+    "N1H3",
+    "NH3",
+    "H1H1H1N1",
+    "[15N]H3",
+    "[15N1]H3",
+    "UTeHe",
+    "[ 15 N     1 ] H 1",
+]
+negative = [
+    "Ht1",
+    "15N1",
+    "15 N 1 H 1",
+    "[15NH3",
+]
+
+[adductIon]
+positive = [
+    "+H+",
+    "1H1+1",
+    "+1[1H1]+",
+]
+negative = [
+    "1 1H1 1",
+    "1H1"
+]
+
+[charge]
+positive = [
+    "/1",
+    "/+1",
+    "/1[+H+]",
+    "/1[-e-]",
 ]

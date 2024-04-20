@@ -27,6 +27,9 @@ fn main() {
     let syntax = Syntax::new(syntax).unwrap_or_else(|e| panic!("Syntax error:\n{:#?}", e));
     let graph = ebnf::parser::graph::LexGraph::compile(&syntax, &config);
 
+    let mut total_pos = 0;
+    let mut total_neg = 0;
+    let mut failed = 0;
     let tests = tests_file.parse::<Table>().unwrap();
     for (name, set) in tests {
         if let Value::Table(set) = set {
@@ -36,6 +39,7 @@ fn main() {
                 let mut positive = 0;
                 let mut negative = 0;
                 if let Value::Array(tests) = set {
+                    total_pos += tests.len();
                     for test in tests {
                         if let Value::String(test) = test {
                             match parser.parse(&mut MarkableReader::new(test, test.as_str().into()))
@@ -44,6 +48,7 @@ fn main() {
                                 Err(e) => {
                                     print_error(e, test);
                                     negative += 1;
+                                    failed += 1;
                                 }
                             }
                         } else {
@@ -68,13 +73,15 @@ fn main() {
                 let mut positive = 0;
                 let mut negative = 0;
                 if let Value::Array(tests) = set {
+                    total_neg += tests.len();
                     for test in tests {
                         if let Value::String(test) = test {
                             match parser.parse(&mut MarkableReader::new(test, test.as_str().into()))
                             {
                                 Ok(_) => {
                                     println!("Negative example failed: '{test}'",);
-                                    positive += 1
+                                    positive += 1;
+                                    failed += 1;
                                 }
                                 Err(_) => {
                                     negative += 1;
@@ -101,6 +108,23 @@ fn main() {
         } else {
             panic!("The toml test file should be a table for '{name}'");
         }
+    }
+    println!();
+    if failed == 0 {
+        println!(
+            "{} - {} positive and {} negative tests",
+            "Passed".green(),
+            total_pos,
+            total_neg
+        );
+    } else {
+        println!(
+            "{} - {} failed tests out of {} positive and {} negative tests",
+            "Failed".red(),
+            failed,
+            total_pos,
+            total_neg
+        );
     }
 }
 
