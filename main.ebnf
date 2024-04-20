@@ -29,10 +29,11 @@ modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
 mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
 modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
 MODCOUNT = INT;
-modInternal = modMass | modAccession | modName | | modFormula | modGlycan | info;
+modInternal = modMass | modAccession | modName | modFormula | modGlycan | info;
 
-modNTerm = (mod | (ModL, modLabel, ModR)), "-";
-modCTerm = "-", (mod | (ModL, modLabel, ModR));
+modNTerm = modOrLabel, "-";
+modCTerm = "-", modOrLabel;
+modOrLabel = mod | (ModL, modLabel, ModR);
 
 modRange = ModRangeL, modRangePos, ModRangeR, {mod};
 modRangePos = {aa | modRange};
@@ -50,12 +51,11 @@ modMass = [modMassCV, ":"], SIGNEDNUMBER;
 modMassCV = CVAbbreviationOpt | CVAbbreviation  | "Obs";
 
 modFormula = "Formula:", formula;
-formula = {(WS, ModL, WS, INT, WS, ELEMENT, WS, [INT], WS, ModR) | (WS, ELEMENT, WS, [INT], WS)};
-formulaWithElectrons = {(WS, ModL, WS, INT, WS, elementOrElectron, WS, [INT], WS, ModR) | (WS, elementOrElectron, WS, [INT], WS)};
+formula = {(WS, ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR) | (WS, ELEMENT, WS, [SIGNEDINT], WS)};
+formulaWithElectrons = {(WS, ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR) | (WS, elementOrElectron, WS, [SIGNEDINT], WS)};
 elementOrElectron = ELEMENT | "e";
 
-modGlycan = "Glycan:", {monosaccharide, WS};
-monosaccharide = MONOSACCHARIDE, [INT];
+modGlycan = "Glycan:", {MONOSACCHARIDE, [INT], WS};
 
 info = "Info:", TEXT;
 

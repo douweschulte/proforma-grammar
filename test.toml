@@ -3,6 +3,9 @@ positive = [
     "AA",
     "A[+1]",
     "AA[+1]",
+    "A(AAAA)[+1][+1]",
+    "UWAKJDNLASNOIJPojkjjdakjn[U:Oxidation]",
+    "[+1]-A[+1]-[+1]",
 ]
 negative = [
     "A[UNIMODIFY:+2]",
@@ -45,6 +48,8 @@ positive = [
     "[+23.092]",
     "[-23.092]",
     "[14|Obs:+14|UNIMOD:0034|U:methyl]",
+    "[Formula:C-1O-1]",
+    "[Glycan:Hex1HexNAc2]",
 ]
 
 [modMass] 
@@ -61,6 +66,7 @@ positive = [
 positive = [
     "N1H3",
     "NH3",
+    "C-1O-1",
     "H1H1H1N1",
     "[15N]H3",
     "[15N1]H3",
