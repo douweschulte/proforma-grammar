@@ -21,14 +21,14 @@ aa = AA, {mod | (ModL, modLabel, ModR)};
 AA = LETTER;
 
 modGlobal = ModGlobalL, (ISOTOPE | (mod, "@", {AA, ","}, AA)), ModGlobalR;
-ISOTOPE = [INT], {LETTER}, [SIGNEDINT];
+ISOTOPE = [INT], ELEMENT | "D", [SIGNEDINT];
 
-modUnknownPos = {mod, ["^", MODCOUNT]}, '?' ;
+modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
 
-mod =       ModL,        {modInternal, [modLabel], "|"}, modInternal, [modLabel], ModR;
-modLabile = ModLabileL,  {modInternal,             "|"}, modInternal,             ModLabileR;
+mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
+modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
 MODCOUNT = INT;
-modInternal = (modName | modAccession | modMass | modFormula | modGlycan | info);
+modInternal = modName | modAccession | modMass | modFormula | modGlycan | info;
 
 modNTerm = (mod | (ModL, modLabel, ModR)), "-";
 modCTerm = "-", (mod | (ModL, modLabel, ModR));
@@ -36,20 +36,20 @@ modCTerm = "-", (mod | (ModL, modLabel, ModR));
 modRange = ModRangeL, modRangePos, ModRangeR, {mod};
 modRangePos = {aa | modRange};
 
-modName = ((CVAbbrev, ":") | [CVAbbrevOpt, ":"]), TEXT;
+modName = [(CVAbbreviation | CVAbbreviationOpt), ":"], TEXT;
 
-CVAbbrevOpt = "U"| "M" ;
-CVAbbrev = "R" | "X" | "G";
+CVAbbreviationOpt = "U" | "M";
+CVAbbreviation = "R" | "X" | "G";
 
 modAccession = CVName, ":", TEXT;
 CVName = "UNIMOD" | "MOD" | "RESID" | "XLMOD" | "GNO";
 
-modMass = [(CVAbbrevOpt | CVAbbrev | "Obs"), ":"], SIGNEDNUMBER;
+modMass = [(CVAbbreviationOpt | CVAbbreviation | CVName | "Obs"), ":"], SIGNEDNUMBER;
 
 modFormula = "Formula:", FORMULA;
-FORMULA = {(ModL, SIGNEDINT, {LETTER}, [SIGNEDINT], ModR) | ({LETTER}, WS, [SIGNEDINT], WS)};
+FORMULA = {(ModL, SIGNEDINT, ELEMENT, [SIGNEDINT], ModR) | (ELEMENT, WS, [SIGNEDINT], WS)};
 
-modGlycan = "Glycan", {monosaccharide, WS};
+modGlycan = "Glycan:", {monosaccharide, WS};
 monosaccharide = MONOSACCHARIDE, [INT];
 
 info = "Info:", TEXT;
@@ -174,3 +174,122 @@ MONOSACCHARIDE = "uxxxxxxxxh"
 	| "?-?-Hexx"
 	| "?-?-Hepx"
 	| "?-?-Decx";
+
+ELEMENT = "He"|
+    "Li"|
+    "Be"|
+    "Ne"|
+    "Na"|
+    "Mg"|
+    "Al"|
+    "Si"|
+    "Cl"|
+    "Ar"|
+    "Ca"|
+    "Sc"|
+    "Ti"|
+    "Cr"|
+    "Mn"|
+    "Fe"|
+    "Co"|
+    "Ni"|
+    "Cu"|
+    "Zn"|
+    "Ga"|
+    "Ge"|
+    "As"|
+    "Se"|
+    "Br"|
+    "Kr"|
+    "Rb"|
+    "Sr"|
+    "Zr"|
+    "Nb"|
+    "Mo"|
+    "Tc"|
+    "Ru"|
+    "Rh"|
+    "Pd"|
+    "Ag"|
+    "Cd"|
+    "In"|
+    "Sn"|
+    "Sb"|
+    "Te"|
+    "Xe"|
+    "Cs"|
+    "Ba"|
+    "La"|
+    "Ce"|
+    "Pr"|
+    "Nd"|
+    "Pm"|
+    "Sm"|
+    "Eu"|
+    "Gd"|
+    "Tb"|
+    "Dy"|
+    "Ho"|
+    "Er"|
+    "Tm"|
+    "Yb"|
+    "Lu"|
+    "Hf"|
+    "Ta"|
+    "Re"|
+    "Os"|
+    "Ir"|
+    "Pt"|
+    "Au"|
+    "Hg"|
+    "Tl"|
+    "Pb"|
+    "Bi"|
+    "Po"|
+    "At"|
+    "Rn"|
+    "Fr"|
+    "Ra"|
+    "Ac"|
+    "Th"|
+    "Pa"|
+    "Np"|
+    "Pu"|
+    "Am"|
+    "Cm"|
+    "Bk"|
+    "Cf"|
+    "Es"|
+    "Fm"|
+    "Md"|
+    "No"|
+    "Lr"|
+    "Rf"|
+    "Db"|
+    "Sg"|
+    "Bh"|
+    "Hs"|
+    "Mt"|
+    "Ds"|
+    "Rg"|
+    "Cn"|
+    "Nh"|
+    "Fl"|
+    "Mc"|
+    "Lv"|
+    "Ts"|
+    "Og"|
+    "U" |
+    "W" |
+    "I" |
+    "Y" |
+    "V" |
+    "K" |
+    "S" |
+    "B" |
+    "C" |
+    "N" |
+    "O" |
+    "F" |
+    "H" |
+    "P";

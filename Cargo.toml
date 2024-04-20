@@ -9,3 +9,4 @@ edition = "2021"
 #ebnf = "0.1.4"
 ebnf = { git = "https://github.com/torao/ebnf" }
 toml = "*"
+colored = "2.1"

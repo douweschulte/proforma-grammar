@@ -1,6 +1,7 @@
 use std::io::Read;
 
-use ebnf::{io::MarkableReader, parser::Parser, Syntax};
+use colored::Colorize;
+use ebnf::{io::MarkableReader, parser::Parser, Error, Syntax};
 use toml::{Table, Value};
 
 // TODO: Potential future nice things
@@ -41,7 +42,7 @@ fn main() {
                             {
                                 Ok(_) => positive += 1,
                                 Err(e) => {
-                                    println!("Positive example failed: {:#?}", e);
+                                    print_error(e, test);
                                     negative += 1;
                                 }
                             }
@@ -52,11 +53,16 @@ fn main() {
                 } else {
                     panic!("The toml test file should be a array for '{name}' 'positive'");
                 }
-                println!(
-                    "{name} - Handled {} positive examples, failed {}",
-                    positive + negative,
-                    negative
-                );
+                if negative > 0 {
+                    println!(
+                        "{} - {} positive tests, failed {}",
+                        name.red(),
+                        positive + negative,
+                        negative
+                    );
+                } else {
+                    println!("{} - {} positive tests", name.green(), positive);
+                }
             }
             if let Some(set) = set.get("negative") {
                 let mut positive = 0;
@@ -81,14 +87,31 @@ fn main() {
                 } else {
                     panic!("The toml test file should be a array for '{name}' 'negative'");
                 }
-                println!(
-                    "{name} - Handled {} negative examples, failed {}",
-                    positive + negative,
-                    positive
-                );
+                if positive > 0 {
+                    println!(
+                        "{} - {} negative tests, failed {}",
+                        name.red(),
+                        positive + negative,
+                        positive
+                    );
+                } else {
+                    println!("{} - {} negative tests", name.green(), negative);
+                }
             }
         } else {
             panic!("The toml test file should be a table for '{name}'");
         }
     }
+}
+
+fn print_error(error: Error, text: &str) {
+    println!(
+        "  {}: {}\n   | {}\n     {}{}\n  {}\n",
+        "Error".red(),
+        error.location.name,
+        text,
+        " ".repeat((error.location.columns - 1) as usize),
+        "^".red(),
+        error.message
+    )
 }
