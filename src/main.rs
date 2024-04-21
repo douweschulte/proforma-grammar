@@ -4,10 +4,15 @@ use colored::Colorize;
 use ebnf::{io::MarkableReader, parser::Parser, Error, Syntax};
 use toml::{Table, Value};
 
+use crate::generate::generate;
+
+mod generate;
+
 // TODO: Potential future nice things
-// * Amount of rules tested and passed overview
-// * Better display of the errors
-// * Finish ProForma definition
+// * Separate label into xl/branch and ambiguous to force the first to only occur in XLMOD?
+// * Separate mod into mod and modDefined, the latter for global and labile mods
+// * Copy over all examples (and negative examples) strewn around the format definition
+// * Print EBNF syntax errors nicely
 
 fn main() {
     // Parse EBNF
@@ -27,6 +32,7 @@ fn main() {
     let syntax = Syntax::new(syntax).unwrap_or_else(|e| panic!("Syntax error:\n{:#?}", e));
     let graph = ebnf::parser::graph::LexGraph::compile(&syntax, &config);
 
+    // Go over all tests
     let mut total_pos = 0;
     let mut total_neg = 0;
     let mut failed = 0;
@@ -47,6 +53,7 @@ fn main() {
                                 Ok(_) => positive += 1,
                                 Err(e) => {
                                     print_error(e, test);
+                                    show_examples(&name, &syntax);
                                     negative += 1;
                                     failed += 1;
                                 }
@@ -79,7 +86,8 @@ fn main() {
                             match parser.parse(&mut MarkableReader::new(test, test.as_str().into()))
                             {
                                 Ok(_) => {
-                                    println!("Negative example failed: '{test}'",);
+                                    println!("   {}: '{test}'", "Negative test failed".red());
+                                    show_examples(&name, &syntax);
                                     positive += 1;
                                     failed += 1;
                                 }
@@ -130,7 +138,7 @@ fn main() {
 
 fn print_error(error: Error, text: &str) {
     println!(
-        "  {}: {}\n   | {}\n     {}{}\n  {}\n",
+        "  {}: {}\n   | {}\n     {}{}\n  {}",
         "Error".red(),
         error.location.name,
         text,
@@ -138,4 +146,15 @@ fn print_error(error: Error, text: &str) {
         "^".red(),
         error.message
     )
+}
+
+fn show_examples(name: &str, syntax: &Syntax) {
+    for n in 0..3 {
+        println!(
+            "  {} {n}: {}",
+            "Example".blue(),
+            generate(syntax.get_syntax_rule(name).unwrap(), syntax, n).yellow(),
+        );
+    }
+    println!();
 }

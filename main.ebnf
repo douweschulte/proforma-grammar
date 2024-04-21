@@ -12,63 +12,69 @@ CROSSLINK = "//";
 CHIMERIC = "+";
 
 (* Main entry point *)
-proforma = {proteoform, CHIMERIC}, proteoform;
+proforma = {modGlobal}, {proteoform, CHIMERIC}, proteoform;
 proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
 linearPeptide = peptide, [charge];
 
-peptide = {modGlobal}, {modUnknownPos}, {modLabile}, [modNTerm], {aa | modRange}, [modCTerm];
+peptide = {modUnknownPos}, {modLabile}, [modNTerm], seqElement, {seqElement}, [modCTerm];
+seqElement = aa | modRange | ambiguousAA;
 
+ambiguousAA = "(?", aa, {aa}, ")";
 aa = AA, {mod | (ModL, modLabel, ModR)};
 AA = LETTER;
 
-modGlobal = ModGlobalL, (ISOTOPE | (mod, "@", {AA, ","}, AA)), ModGlobalR;
-ISOTOPE = [INT], ELEMENT | "D", [SIGNEDINT];
+modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
+modGlobalOption = "D" | ISOTOPE | (mod, "@", modGlobalLocation, {",", modGlobalLocation});
+modGlobalLocation = ("N-term:", AA) | "N-term" | AA; 
+ISOTOPE = INT, ELEMENT;
 
 modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
 
 mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
 modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
 MODCOUNT = INT;
-modInternal = modMass | modAccession | modName | modFormula | modGlycan | info;
+modInternal = modFormula | modGlycan | modMass | modAccession | modName | info;
 
-modNTerm = modOrLabel, "-";
-modCTerm = "-", modOrLabel;
-modOrLabel = mod | (ModL, modLabel, ModR);
+modFormula = "Formula:", formula;
+formula = WS, formulaElement, {WS, formulaElement}, WS;
+formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR) | (ELEMENT, WS, [SIGNEDINT]);
 
-modRange = ModRangeL, modRangePos, ModRangeR, {mod};
-modRangePos = {aa | modRange};
+formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
+formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR) | (elementOrElectron, WS, [SIGNEDINT]);
+elementOrElectron = ELEMENT | "e";
 
-modName = [modNameCV, ":"], TEXT;
-modNameCV = CVAbbreviation | CVAbbreviationOpt;
+modGlycan = "Glycan:", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
 
+modMass = [modMassCV, ":"], SIGNEDNUMBER;
+modMassCV = CVAbbreviationOpt | CVAbbreviation  | "Obs";
 CVAbbreviationOpt = "U" | "M";
 CVAbbreviation = "R" | "X" | "G";
 
 modAccession = CVName, ":", TEXT;
 CVName = "UNIMOD" | "MOD" | "RESID" | "XLMOD" | "GNO";
 
-modMass = [modMassCV, ":"], SIGNEDNUMBER;
-modMassCV = CVAbbreviationOpt | CVAbbreviation  | "Obs";
-
-modFormula = "Formula:", formula;
-formula = {(WS, ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR) | (WS, ELEMENT, WS, [SIGNEDINT], WS)};
-formulaWithElectrons = {(WS, ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR) | (WS, elementOrElectron, WS, [SIGNEDINT], WS)};
-elementOrElectron = ELEMENT | "e";
-
-modGlycan = "Glycan:", {MONOSACCHARIDE, [INT], WS};
+modName = [modNameCV, ":"], TEXT;
+modNameCV = CVAbbreviation | CVAbbreviationOpt;
 
 info = "Info:", TEXT;
 
-modLabel = "#", (ModLabelXL | ModLabelBranch | ModLabel), ["(", ModScore, ")"];
-ModLabelXL = "XL", ModLabel;
-ModLabelBranch = "BRANCH";
-ModLabel = {LETTER | DIGIT};
-ModScore = SIGNEDNUMBER;
+modNTerm = modOrLabel, "-";
+modCTerm = "-", modOrLabel;
+modOrLabel = mod | (ModL, modLabel, ModR);
 
-charge = "/", SIGNEDINT, [ModL, {adductIon, ","}, adductIon, ModR];
+modRange = ModRangeL, aa, {aa}, ModRangeR, {mod};
+
+modLabel = "#", (ModLabelXL | ModLabelBranch | ModLabelAmbiguous);
+ModLabelXL = "XL", ALPHANUMERIC, {ALPHANUMERIC};
+ModLabelBranch = "BRANCH";
+ModLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
+
+charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
 adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
 
-TEXT = {LETTER|" "|DIGIT};
+ALPHANUMERIC = LETTER | DIGIT;
+TEXT = {GRAPHICCHARACTER}, {ModL, {GRAPHICCHARACTER}, ModR}, {GRAPHICCHARACTER};
+GRAPHICCHARACTER = LETTER|DIGIT|" "|"+"|"-"|"|"|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
 
 ModL = "[";
 ModR = "]";
