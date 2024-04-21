@@ -156,13 +156,15 @@ negative = [
     "P(RT(ESFRMS)[+19.0523]IS)[+19.0523]K",
     "MPGLVDSNPAPPESQEKKPLK(PCCACPETKKARDACIIEKGEEHCGHLIEAHKECMRALGFKI)[Oxidation]^2[half cystine][half cystine]",
     "ELVIS[Phospho|INFO:newly]discovered]K",
-    "<[TMT6plex#g1]>AA",
-    "<[TMT6plex#XL1]>AA",
-    "<[TMT6plex#BRANCH]>AA",
+    "<[TMT6plex]>AA",
+    "<[TMT6plex#g1]@A>AA",
+    "<[TMT6plex#XL1]@A>AA",
+    "<[TMT6plex#BRANCH]@A>AA",
     "{TMT6plex#g1}AA",
     "{TMT6plex#XL1}AA",
     "{TMT6plex#BRANCH}AA",
 ]
+generate = 10
 
 [modGlobal]
 positive = [

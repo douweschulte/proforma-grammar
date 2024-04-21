@@ -8,6 +8,9 @@ use crate::generate::generate;
 
 mod generate;
 
+// TODO:
+// * Capitalisation of the keywords is not managed
+
 fn main() {
     // Parse EBNF
     let mut definition_file = String::new();
@@ -35,6 +38,7 @@ fn main() {
     let mut total_pos = 0;
     let mut total_neg = 0;
     let mut failed = 0;
+    let mut generate = Vec::new();
     let tests = tests_file.parse::<Table>().unwrap();
     for (name, set) in tests {
         if let Value::Table(set) = set {
@@ -72,7 +76,7 @@ fn main() {
                         positive + negative,
                         negative
                     );
-                    show_examples(&name, &syntax);
+                    show_examples(&name, &syntax, 3);
                 } else {
                     println!("{} - {} positive tests", name.green(), positive);
                 }
@@ -109,9 +113,16 @@ fn main() {
                         positive + negative,
                         positive
                     );
-                    show_examples(&name, &syntax);
+                    show_examples(&name, &syntax, 3);
                 } else {
                     println!("{} - {} negative tests", name.green(), negative);
+                }
+            }
+            if let Some(num) = set.get("generate") {
+                if let Value::Integer(num) = num {
+                    generate.push((name.clone(), *num));
+                } else {
+                    panic!("The toml test file should be an integer for '{name}' 'generate'");
                 }
             }
         } else {
@@ -135,6 +146,11 @@ fn main() {
             total_neg
         );
     }
+
+    // Go over generations
+    for (name, num) in generate {
+        show_examples(&name, &syntax, u64::try_from(num).unwrap());
+    }
 }
 
 fn print_error(error: Error, text: &str, error_type: &str) {
@@ -151,8 +167,8 @@ fn print_error(error: Error, text: &str, error_type: &str) {
     )
 }
 
-fn show_examples(name: &str, syntax: &Syntax) {
-    for n in 0..3 {
+fn show_examples(name: &str, syntax: &Syntax, num: u64) {
+    for n in 0..num {
         println!(
             "  {} {n}: {}",
             "Example".blue(),

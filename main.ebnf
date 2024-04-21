@@ -5,11 +5,24 @@ SIGNEDINT = [SIGN], INT;
 SIGNORSIGNEDINT = SIGNEDINT | SIGN;
 NUMBER = INT, [".", INT];
 SIGNEDNUMBER = [SIGN], INT, [".", INT];
-LETTER = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z";
+LETTER = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"
+        |"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z";
+ALPHANUMERIC = LETTER|DIGIT;
+(* Not exhaustively listed all possible characters. Anything unicode graphic not '[' or ']' is possible*)
+GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"|"|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
+TEXT = {GRAPHICCHARACTER}, {ModL, {GRAPHICCHARACTER}, ModR}, {GRAPHICCHARACTER};
 WS = {" "};
 
 CROSSLINK = "//";
 CHIMERIC = "+";
+ModL = "[";
+ModR = "]";
+ModLabileL = "{";
+ModLabileR = "}";
+ModGlobalL = "<";
+ModGlobalR = ">";
+ModRangeL = "(";
+ModRangeR = ")";
 
 (* Main entry point *)
 proforma = {modGlobal}, {proteoform, CHIMERIC}, proteoform;
@@ -24,29 +37,31 @@ aa = AA, {mod | (ModL, modLabel, ModR)};
 AA = LETTER;
 
 modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
-modGlobalOption = "D" | ISOTOPE | (mod, "@", modGlobalLocation, {",", modGlobalLocation});
+modGlobalOption = "D" | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
 modGlobalLocation = ("N-term:", AA) | "N-term" | AA; 
 ISOTOPE = INT, ELEMENT;
 
-modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
+modUnknownPos = {mod, ["^", INT]}, '?';
 
-mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
-modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
-MODCOUNT = INT;
-modInternal = modFormula | modGlycan | modMass | modAccession | info | modName;
+mod = ModL, modInternal, ModR;
+modDefined = ModL, modInternalDefined, ModR;
+modLabile = ModLabileL, modInternalDefined, ModLabileR;
+modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
+modInternalDefined = modSingle, {"|", modSingle};
+modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
 
 modFormula = "Formula:", formula;
 formula = WS, formulaElement, {WS, formulaElement}, WS;
-formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR) | (ELEMENT, WS, [SIGNEDINT]);
+formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR)|(ELEMENT, WS, [SIGNEDINT]);
 
 formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
-formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR) | (elementOrElectron, WS, [SIGNEDINT]);
+formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR)|(elementOrElectron, WS, [SIGNEDINT]);
 elementOrElectron = ELEMENT | "e";
 
 modGlycan = "Glycan:", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
 
 modMass = [modMassCV, ":"], SIGNEDNUMBER;
-modMassCV = CVAbbreviationOpt | CVAbbreviation  | "Obs";
+modMassCV = CVAbbreviationOpt | CVAbbreviation | "Obs";
 CVAbbreviationOpt = "U" | "M";
 CVAbbreviation = "R" | "X" | "G";
 
@@ -72,235 +87,32 @@ ModLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
 adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
 
-ALPHANUMERIC = LETTER | DIGIT;
-TEXT = {GRAPHICCHARACTER}, {ModL, {GRAPHICCHARACTER}, ModR}, {GRAPHICCHARACTER};
-GRAPHICCHARACTER = LETTER|DIGIT|" "|"+"|"-"|"|"|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
+MONOSACCHARIDE = "uxxxxxxxxh"|"uxxxxxxh"|"uxxxxxh"|"uxxxxh_?*OSO/3=O/3=O"|"uxxxxh_?*OPO/3O/3=O"|"uxxxxh_?*NSO/3=O/3=O"
+                |"uxxxxh_?*NCC/3=O_?*OSO/3=O/3=O"|"uxxxxh_?*NCC/3=O"|"uxxxxh_?*N"|"uxxxxh"|"uxxxh"|"uxxxdh"|"uxxh"
+                |"uxh43344h"|"uxh"|"uh"|"u1221m"|"sulfate"|"phosphate"|"enHexA"|"en,aHex"|"en,a-Hex"|"dHex"|"d-Hex"
+                |"aHex"|"a-Hex"|"Tri"|"Tet"|"Sug"|"Sialic Acid"|"S"|"RES\n1b:x-xgro-NON-x:x\nLIN\n"
+                |"RES\n1b:x-xgro-HEP-x:x\nLIN\n"|"RES\n1b:x-lgal-HEX-x:x|6:d\nLIN\n"
+                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-glycolyl\nLIN\n1:1d(5+1)2n\n"
+                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-acetyl\nLIN\n1:1d(5+1)2n\n"
+                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:amino\nLIN\n1:1d(5+1)2n\n"|"RES\n1b:x-TRI-x:x\nLIN\n"
+                |"RES\n1b:x-TET-x:x\nLIN\n"|"RES\n1b:x-SUG-x:x\nLIN\n"|"RES\n1b:x-PEN-x:x\nLIN\n"
+                |"RES\n1b:x-OCT-x:x\nLIN\n"|"RES\n1b:x-HEX-x:x|-1:en|-1:a\nLIN\n"|"RES\n1b:x-HEX-x:x|-1:d\nLIN\n"
+                |"RES\n1b:x-HEX-x:x|-1:a\nLIN\n"|"RES\n1b:x-HEX-x:x\nLIN\n"
+                |"RES\n1b:x-HEX-x:x\n2s:sulfate\nLIN\n1:1o(-1+1)2n\n"
+                |"RES\n1b:x-HEX-x:x\n2s:phosphate\nLIN\n1:1o(-1+1)2n\n"
+                |"RES\n1b:x-HEX-x:x\n2s:n-sulfate\nLIN\n1:1d(-1+1)2n\n"
+                |"RES\n1b:x-HEX-x:x\n2s:n-acetyl\nLIN\n1:1d(-1+1)2n\n"
+                |"RES\n1b:x-HEX-x:x\n2s:n-acetyl\n3s:sulfate\nLIN\n1:1d(-1+1)2n\n2:1o(-1+1)3n\n"
+                |"RES\n1b:x-HEX-x:x\n2s:amino\nLIN\n1:1d(-1+1)2n\n"|"RES\n1b:x-DEC-x:x\nLIN\n"|"Pen"|"P"|"Oct"|"Non"
+                |"Neuraminic acid"|"NeuGc"|"NeuAc"|"Neu5Gc"|"Neu5Ac"|"Neu"|"HexS"|"HexP"|"HexNS"|"HexNAc(S)"|"HexNAc"
+                |"HexN"|"HexA"|"Hex"|"Hep"|"Fucose"|"Fuc"|"Dec"|"Aud21122h_5*NCCO/3=O"|"Aud21122h_5*NCC/3=O"
+                |"Aud21122h_5*N"|"?-L-Fucx"|"?-D-Neux5NGc"|"?-D-Neux5NAc"|"?-D-Neux"|"?-?-en,a-Hexx"|"?-?-d-Hexx"
+                |"?-?-a-Hexx"|"?-?-Trix"|"?-?-Tetx"|"?-?-Sugx"|"?-?-Penx"|"?-?-Octx"|"?-?-Nonx"|"?-?-HexxS"|"?-?-HexxP"
+                |"?-?-HexxNS"|"?-?-HexxNAc(S)"|"?-?-HexxNAc"|"?-?-HexxN"|"?-?-Hexx"|"?-?-Hepx"|"?-?-Decx";
 
-ModL = "[";
-ModR = "]";
-ModLabileL = "{";
-ModLabileR = "}";
-ModGlobalL = "<";
-ModGlobalR = ">";
-ModRangeL = "(";
-ModRangeR = ")";
-
-MONOSACCHARIDE = "uxxxxxxxxh"
-	| "uxxxxxxh"
-	| "uxxxxxh"
-	| "uxxxxh_?*OSO/3=O/3=O"
-	| "uxxxxh_?*OPO/3O/3=O"
-	| "uxxxxh_?*NSO/3=O/3=O"
-	| "uxxxxh_?*NCC/3=O_?*OSO/3=O/3=O"
-	| "uxxxxh_?*NCC/3=O"
-	| "uxxxxh_?*N"
-	| "uxxxxh"
-	| "uxxxh"
-	| "uxxxdh"
-	| "uxxh"
-	| "uxh43344h"
-	| "uxh"
-	| "uh"
-	| "u1221m"
-	| "sulfate"
-	| "phosphate"
-	| "enHexA"
-	| "en,aHex"
-	| "en,a-Hex"
-	| "dHex"
-	| "d-Hex"
-	| "aHex"
-	| "a-Hex"
-	| "Tri"
-	| "Tet"
-	| "Sug"
-	| "Sialic Acid"
-	| "S"
-	| "RES\n1b:x-xgro-NON-x:x\nLIN\n"
-	| "RES\n1b:x-xgro-HEP-x:x\nLIN\n"
-	| "RES\n1b:x-lgal-HEX-x:x|6:d\nLIN\n"
-	| "RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-glycolyl\nLIN\n1:1d(5+1)2n\n"
-	| "RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-acetyl\nLIN\n1:1d(5+1)2n\n"
-	| "RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:amino\nLIN\n1:1d(5+1)2n\n"
-	| "RES\n1b:x-TRI-x:x\nLIN\n"
-	| "RES\n1b:x-TET-x:x\nLIN\n"
-	| "RES\n1b:x-SUG-x:x\nLIN\n"
-	| "RES\n1b:x-PEN-x:x\nLIN\n"
-	| "RES\n1b:x-OCT-x:x\nLIN\n"
-	| "RES\n1b:x-HEX-x:x|-1:en|-1:a\nLIN\n"
-	| "RES\n1b:x-HEX-x:x|-1:d\nLIN\n"
-	| "RES\n1b:x-HEX-x:x|-1:a\nLIN\n"
-	| "RES\n1b:x-HEX-x:x\nLIN\n"
-	| "RES\n1b:x-HEX-x:x\n2s:sulfate\nLIN\n1:1o(-1+1)2n\n"
-	| "RES\n1b:x-HEX-x:x\n2s:phosphate\nLIN\n1:1o(-1+1)2n\n"
-	| "RES\n1b:x-HEX-x:x\n2s:n-sulfate\nLIN\n1:1d(-1+1)2n\n"
-	| "RES\n1b:x-HEX-x:x\n2s:n-acetyl\nLIN\n1:1d(-1+1)2n\n"
-	| "RES\n1b:x-HEX-x:x\n2s:n-acetyl\n3s:sulfate\nLIN\n1:1d(-1+1)2n\n2:1o(-1+1)3n\n"
-	| "RES\n1b:x-HEX-x:x\n2s:amino\nLIN\n1:1d(-1+1)2n\n"
-	| "RES\n1b:x-DEC-x:x\nLIN\n"
-	| "Pen"
-	| "P"
-	| "Oct"
-	| "Non"
-	| "Neuraminic acid"
-	| "NeuGc"
-	| "NeuAc"
-	| "Neu5Gc"
-	| "Neu5Ac"
-	| "Neu"
-	| "HexS"
-	| "HexP"
-	| "HexNS"
-	| "HexNAc(S)"
-	| "HexNAc"
-	| "HexN"
-	| "HexA"
-	| "Hex"
-	| "Hep"
-	| "Fucose"
-	| "Fuc"
-	| "Dec"
-	| "Aud21122h_5*NCCO/3=O"
-	| "Aud21122h_5*NCC/3=O"
-	| "Aud21122h_5*N"
-	| "?-L-Fucx"
-	| "?-D-Neux5NGc"
-	| "?-D-Neux5NAc"
-	| "?-D-Neux"
-	| "?-?-en,a-Hexx"
-	| "?-?-d-Hexx"
-	| "?-?-a-Hexx"
-	| "?-?-Trix"
-	| "?-?-Tetx"
-	| "?-?-Sugx"
-	| "?-?-Penx"
-	| "?-?-Octx"
-	| "?-?-Nonx"
-	| "?-?-HexxS"
-	| "?-?-HexxP"
-	| "?-?-HexxNS"
-	| "?-?-HexxNAc(S)"
-	| "?-?-HexxNAc"
-	| "?-?-HexxN"
-	| "?-?-Hexx"
-	| "?-?-Hepx"
-	| "?-?-Decx";
-
-ELEMENT = "He"|
-    "Li"|
-    "Be"|
-    "Ne"|
-    "Na"|
-    "Mg"|
-    "Al"|
-    "Si"|
-    "Cl"|
-    "Ar"|
-    "Ca"|
-    "Sc"|
-    "Ti"|
-    "Cr"|
-    "Mn"|
-    "Fe"|
-    "Co"|
-    "Ni"|
-    "Cu"|
-    "Zn"|
-    "Ga"|
-    "Ge"|
-    "As"|
-    "Se"|
-    "Br"|
-    "Kr"|
-    "Rb"|
-    "Sr"|
-    "Zr"|
-    "Nb"|
-    "Mo"|
-    "Tc"|
-    "Ru"|
-    "Rh"|
-    "Pd"|
-    "Ag"|
-    "Cd"|
-    "In"|
-    "Sn"|
-    "Sb"|
-    "Te"|
-    "Xe"|
-    "Cs"|
-    "Ba"|
-    "La"|
-    "Ce"|
-    "Pr"|
-    "Nd"|
-    "Pm"|
-    "Sm"|
-    "Eu"|
-    "Gd"|
-    "Tb"|
-    "Dy"|
-    "Ho"|
-    "Er"|
-    "Tm"|
-    "Yb"|
-    "Lu"|
-    "Hf"|
-    "Ta"|
-    "Re"|
-    "Os"|
-    "Ir"|
-    "Pt"|
-    "Au"|
-    "Hg"|
-    "Tl"|
-    "Pb"|
-    "Bi"|
-    "Po"|
-    "At"|
-    "Rn"|
-    "Fr"|
-    "Ra"|
-    "Ac"|
-    "Th"|
-    "Pa"|
-    "Np"|
-    "Pu"|
-    "Am"|
-    "Cm"|
-    "Bk"|
-    "Cf"|
-    "Es"|
-    "Fm"|
-    "Md"|
-    "No"|
-    "Lr"|
-    "Rf"|
-    "Db"|
-    "Sg"|
-    "Bh"|
-    "Hs"|
-    "Mt"|
-    "Ds"|
-    "Rg"|
-    "Cn"|
-    "Nh"|
-    "Fl"|
-    "Mc"|
-    "Lv"|
-    "Ts"|
-    "Og"|
-    "U" |
-    "W" |
-    "I" |
-    "Y" |
-    "V" |
-    "K" |
-    "S" |
-    "B" |
-    "C" |
-    "N" |
-    "O" |
-    "F" |
-    "H" |
-    "P";
+ELEMENT = "He"|"Li"|"Be"|"Ne"|"Na"|"Mg"|"Al"|"Si"|"Cl"|"Ar"|"Ca"|"Sc"|"Ti"|"Cr"|"Mn"|"Fe"|"Co"|"Ni"|"Cu"|"Zn"|"Ga"
+         |"Ge"|"As"|"Se"|"Br"|"Kr"|"Rb"|"Sr"|"Zr"|"Nb"|"Mo"|"Tc"|"Ru"|"Rh"|"Pd"|"Ag"|"Cd"|"In"|"Sn"|"Sb"|"Te"|"Xe"
+         |"Cs"|"Ba"|"La"|"Ce"|"Pr"|"Nd"|"Pm"|"Sm"|"Eu"|"Gd"|"Tb"|"Dy"|"Ho"|"Er"|"Tm"|"Yb"|"Lu"|"Hf"|"Ta"|"Re"|"Os"
+         |"Ir"|"Pt"|"Au"|"Hg"|"Tl"|"Pb"|"Bi"|"Po"|"At"|"Rn"|"Fr"|"Ra"|"Ac"|"Th"|"Pa"|"Np"|"Pu"|"Am"|"Cm"|"Bk"|"Cf"
+         |"Es"|"Fm"|"Md"|"No"|"Lr"|"Rf"|"Db"|"Sg"|"Bh"|"Hs"|"Mt"|"Ds"|"Rg"|"Cn"|"Nh"|"Fl"|"Mc"|"Lv"|"Ts"|"Og"|"U"
+         |"W"|"I"|"Y"|"V"|"K"|"S"|"B"|"C"|"N"|"O"|"F"|"H"|"P";
