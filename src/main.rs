@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::{io::Read, process::exit};
 
 use colored::Colorize;
 use ebnf::{io::MarkableReader, parser::Parser, Error, Syntax};
@@ -7,12 +7,6 @@ use toml::{Table, Value};
 use crate::generate::generate;
 
 mod generate;
-
-// TODO: Potential future nice things
-// * Separate label into xl/branch and ambiguous to force the first to only occur in XLMOD?
-// * Separate mod into mod and modDefined, the latter for global and labile mods
-// * Copy over all examples (and negative examples) strewn around the format definition
-// * Print EBNF syntax errors nicely
 
 fn main() {
     // Parse EBNF
@@ -26,10 +20,15 @@ fn main() {
         .unwrap()
         .read_to_string(&mut tests_file)
         .unwrap();
-    let syntax = ebnf::lex::parse_str("main.ebnf", &definition_file)
-        .unwrap_or_else(|e| panic!("Lexing error:\n{:#?}", e));
+    let syntax = ebnf::lex::parse_str("main.ebnf", &definition_file).unwrap_or_else(|e| {
+        print_error(e, &definition_file, "Lexing error");
+        exit(-1);
+    });
     let config = ebnf::parser::graph::GraphConfig::new();
-    let syntax = Syntax::new(syntax).unwrap_or_else(|e| panic!("Syntax error:\n{:#?}", e));
+    let syntax = Syntax::new(syntax).unwrap_or_else(|e| {
+        print_error(e, &definition_file, "Syntax error");
+        exit(-2);
+    });
     let graph = ebnf::parser::graph::LexGraph::compile(&syntax, &config);
 
     // Go over all tests
@@ -39,8 +38,10 @@ fn main() {
     let tests = tests_file.parse::<Table>().unwrap();
     for (name, set) in tests {
         if let Value::Table(set) = set {
-            let mut parser = Parser::new(&graph, &name)
-                .unwrap_or_else(|| panic!("The name '{name}' is not defined"));
+            let mut parser = Parser::new(&graph, &name).unwrap_or_else(|| {
+                println!("The name '{name}' is not defined");
+                exit(-3)
+            });
             if let Some(set) = set.get("positive") {
                 let mut positive = 0;
                 let mut negative = 0;
@@ -52,8 +53,7 @@ fn main() {
                             {
                                 Ok(_) => positive += 1,
                                 Err(e) => {
-                                    print_error(e, test);
-                                    show_examples(&name, &syntax);
+                                    print_error(e, test, "Positive test failed");
                                     negative += 1;
                                     failed += 1;
                                 }
@@ -72,6 +72,7 @@ fn main() {
                         positive + negative,
                         negative
                     );
+                    show_examples(&name, &syntax);
                 } else {
                     println!("{} - {} positive tests", name.green(), positive);
                 }
@@ -87,7 +88,6 @@ fn main() {
                             {
                                 Ok(_) => {
                                     println!("   {}: '{test}'", "Negative test failed".red());
-                                    show_examples(&name, &syntax);
                                     positive += 1;
                                     failed += 1;
                                 }
@@ -109,6 +109,7 @@ fn main() {
                         positive + negative,
                         positive
                     );
+                    show_examples(&name, &syntax);
                 } else {
                     println!("{} - {} negative tests", name.green(), negative);
                 }
@@ -136,15 +137,17 @@ fn main() {
     }
 }
 
-fn print_error(error: Error, text: &str) {
+fn print_error(error: Error, text: &str, error_type: &str) {
     println!(
         "  {}: {}\n   | {}\n     {}{}\n  {}",
-        "Error".red(),
+        error_type.red(),
         error.location.name,
-        text,
+        text.lines()
+            .nth((error.location.lines - 1) as usize)
+            .unwrap(),
         " ".repeat((error.location.columns - 1) as usize),
         "^".red(),
-        error.message
+        error.message.blue(),
     )
 }
 

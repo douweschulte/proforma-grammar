@@ -33,7 +33,7 @@ modUnknownPos = {mod, ["^", MODCOUNT]}, '?';
 mod =       ModL,       modInternal, [modLabel], {"|", modInternal, [modLabel]}, ModR;
 modLabile = ModLabileL, modInternal,             {"|", modInternal},             ModLabileR;
 MODCOUNT = INT;
-modInternal = modFormula | modGlycan | modMass | modAccession | modName | info;
+modInternal = modFormula | modGlycan | modMass | modAccession | info | modName;
 
 modFormula = "Formula:", formula;
 formula = WS, formulaElement, {WS, formulaElement}, WS;
