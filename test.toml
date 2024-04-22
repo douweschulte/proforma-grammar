@@ -196,7 +196,8 @@ positive = [
 ]
 
 [modMass]
-positive = ["23", "+23", "23.0", "+23.0", "U:23", "Obs:23"]
+positive = ["+23", "-23.0", "+23.0", "U:+23", "Obs:+23"]
+negative = ["23", "U:23"]
 
 [formula]
 positive = [

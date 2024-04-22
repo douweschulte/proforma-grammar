@@ -1,3 +1,83 @@
+(* Main entry point *)
+proforma = {modGlobal}, {proteoform, CHIMERIC}, proteoform;
+modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
+modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
+modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", AA) | NTERM | AA; 
+NTERM = N, "-", T, E, R, M;
+CTERM = C, "-", T, E, R, M;
+ISOTOPE = INT, ELEMENT;
+
+proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
+
+linearPeptide = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm], [charge];
+sequence = seqElement, {seqElement};
+seqElement = ambiguousAA | modRange | aa;
+(* Not specified what can happen inside, based on the modRange I prefer simple AA sequence *)
+ambiguousAA = "(?", aa, {aa}, ")";
+(* Defined to be simple sequence inside (technically defined to not be modRange inside) *)
+modRange = "(", aa, {aa}, ")", mod, {mod};
+aa = AA, {mod | (ModL, modLabel, ModR)};
+AA = LETTER;
+
+modUnknownPos = {mod, ["^", INT]}, '?';
+
+mod = ModL, modInternal, ModR;
+modDefined = ModL, modInternalDefined, ModR;
+modLabile = ModLabileL, modInternalDefined, ModLabileR;
+modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
+modInternalDefined = modSingle, {"|", modSingle};
+modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
+
+modFormula = F,O,R,M,U,L,A,":", formula;
+formula = WS, formulaElement, {WS, formulaElement}, WS;
+formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR)|(ELEMENT, WS, [SIGNEDINT]);
+
+formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
+formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR)|(elementOrElectron, WS, [SIGNEDINT]);
+elementOrElectron = ELEMENT | E;
+
+modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
+
+(* Defined to need a sign, which is not needed from a parser perspective *)
+modMass = [modMassCV, ":"], SIGN, NUMBER;
+modMassCV = CVAbbreviationOpt | CVAbbreviation | (O,B,S);
+CVAbbreviationOpt = U|M;
+CVAbbreviation = R|X|G;
+
+modAccession = CVName, ":", TEXT;
+CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
+
+modName = [modNameCV, ":"], TEXT;
+modNameCV = CVAbbreviation | CVAbbreviationOpt;
+
+info = I,N,F,O,":", TEXT;
+
+modNTerm = modOrLabel, "-";
+modCTerm = "-", modOrLabel;
+modOrLabel = mod | (ModL, modLabel, ModR);
+
+modLabel = "#", (modLabelXL | modLabelBranch | modLabelAmbiguous);
+modLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
+modLabelBranch = B,R,A,N,C,H;
+modLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
+
+charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
+adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
+
+(* Note that 'NeuAc' and 'NeuGc' are added because 'NeuAc' is used in a example in the spec *)
+MONOSACCHARIDE = (S,U,L,F,A,T,E)|(P,H,O,S,P,H,A,T,E)|(F,U,C)|(N,E,U,A,C)|(N,E,U,G,C)|(N,E,U,"5",A,C)|(N,E,U,"5",G,C)
+                |(N,E,U)|(D,"-",H,E,X)|(E,N,",",A,"-",H,E,X)|(A,"-",H,E,X)|(H,E,X,N,A,C,"(",S,")")|(H,E,X,N,A,C)
+                |(H,E,X,N,S)|(H,E,X,S)|(H,E,X,P)|(H,E,X,N)|(H,E,X)|(S,U,G)|(T,R,I)|(T,E,T)|(P,E,N)|(H,E,P)|(O,C,T)
+                |(N,O,N)|(D,E,C);
+
+ELEMENT = (H,E)|(L,I)|(B,E)|(N,E)|(N,A)|(M,G)|(A,L)|(S,I)|(C,L)|(A,R)|(C,A)|(S,C)|(T,I)|(C,R)|(M,N)|(F,E)|(C,O)|(N,I)
+         |(C,U)|(Z,N)|(G,A)|(G,E)|(A,S)|(S,E)|(B,R)|(K,R)|(R,B)|(S,R)|(Z,R)|(N,B)|(M,O)|(T,C)|(R,U)|(R,H)|(P,D)|(A,G)
+         |(C,D)|(I,N)|(S,N)|(S,B)|(T,E)|(X,E)|(C,S)|(B,A)|(L,A)|(C,E)|(P,R)|(N,D)|(P,M)|(S,M)|(E,U)|(G,D)|(T,B)|(D,Y)
+         |(H,O)|(E,R)|(T,M)|(Y,B)|(L,U)|(H,F)|(T,A)|(R,E)|(O,S)|(I,R)|(P,T)|(A,U)|(H,G)|(T,L)|(P,B)|(B,I)|(P,O)|(A,T)
+         |(R,N)|(F,R)|(R,A)|(A,C)|(T,H)|(P,A)|(N,P)|(P,U)|(A,M)|(C,M)|(B,K)|(C,F)|(E,S)|(F,M)|(M,D)|(N,O)|(L,R)|(R,F)
+         |(D,B)|(S,G)|(B,H)|(H,S)|(M,T)|(D,S)|(R,G)|(C,N)|(N,H)|(F,L)|(M,C)|(L,V)|(T,S)|(O,G)|U|W|I|Y|V|K|S|B|C|N|O|F
+         |H|P;
+
 DIGIT = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9";
 INT = DIGIT, {DIGIT};
 SIGN = "+"|"-";
@@ -31,11 +111,10 @@ W = "W"|"w";
 X = "X"|"x";
 Y = "Y"|"y";
 Z = "Z"|"z";
-LETTER = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"
-        |"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z";
+LETTER = A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z;
 ALPHANUMERIC = LETTER|DIGIT;
-(* Not exhaustively listed all possible characters. Anything unicode graphic not '[' or ']' is possible*)
-GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"|"|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
+(* Not exhaustively listed all possible characters. Anything unicode graphic not '|', '[', or ']' is possible *)
+GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
 TEXT = {GRAPHICCHARACTER}, {ModL, {GRAPHICCHARACTER}, ModR}, {GRAPHICCHARACTER};
 WS = {" "};
 
@@ -47,101 +126,3 @@ ModLabileL = "{";
 ModLabileR = "}";
 ModGlobalL = "<";
 ModGlobalR = ">";
-ModRangeL = "(";
-ModRangeR = ")";
-
-(* Main entry point *)
-proforma = {modGlobal}, {proteoform, CHIMERIC}, proteoform;
-proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
-linearPeptide = peptide, [charge];
-
-peptide = {modUnknownPos}, {modLabile}, [modNTerm], seqElement, {seqElement}, [modCTerm];
-seqElement = ambiguousAA | modRange | aa;
-
-ambiguousAA = "(?", aa, {aa}, ")";
-aa = AA, {mod | (ModL, modLabel, ModR)};
-AA = LETTER;
-
-modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
-modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", AA) | NTERM | AA; 
-NTERM = N, "-", T, E, R, M;
-CTERM = C, "-", T, E, R, M;
-ISOTOPE = INT, ELEMENT;
-
-modUnknownPos = {mod, ["^", INT]}, '?';
-
-mod = ModL, modInternal, ModR;
-modDefined = ModL, modInternalDefined, ModR;
-modLabile = ModLabileL, modInternalDefined, ModLabileR;
-modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
-modInternalDefined = modSingle, {"|", modSingle};
-modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
-
-modFormula = F,O,R,M,U,L,A,":", formula;
-formula = WS, formulaElement, {WS, formulaElement}, WS;
-formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR)|(ELEMENT, WS, [SIGNEDINT]);
-
-formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
-formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR)|(elementOrElectron, WS, [SIGNEDINT]);
-elementOrElectron = ELEMENT | E;
-
-modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
-
-modMass = [modMassCV, ":"], SIGNEDNUMBER;
-modMassCV = CVAbbreviationOpt | CVAbbreviation | (O,B,S);
-CVAbbreviationOpt = U|M;
-CVAbbreviation = R|X|G;
-
-modAccession = CVName, ":", TEXT;
-CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
-
-modName = [modNameCV, ":"], TEXT;
-modNameCV = CVAbbreviation | CVAbbreviationOpt;
-
-info = I,N,F,O,":", TEXT;
-
-modNTerm = modOrLabel, "-";
-modCTerm = "-", modOrLabel;
-modOrLabel = mod | (ModL, modLabel, ModR);
-
-modRange = ModRangeL, aa, {aa}, ModRangeR, {mod};
-
-modLabel = "#", (ModLabelXL | ModLabelBranch | ModLabelAmbiguous);
-ModLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
-ModLabelBranch = B,R,A,N,C,H;
-ModLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
-
-charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
-adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
-
-MONOSACCHARIDE = "uxxxxxxxxh"|"uxxxxxxh"|"uxxxxxh"|"uxxxxh_?*OSO/3=O/3=O"|"uxxxxh_?*OPO/3O/3=O"|"uxxxxh_?*NSO/3=O/3=O"
-                |"uxxxxh_?*NCC/3=O_?*OSO/3=O/3=O"|"uxxxxh_?*NCC/3=O"|"uxxxxh_?*N"|"uxxxxh"|"uxxxh"|"uxxxdh"|"uxxh"
-                |"uxh43344h"|"uxh"|"uh"|"u1221m"|"sulfate"|"phosphate"|"enHexA"|"en,aHex"|"en,a-Hex"|"dHex"|"d-Hex"
-                |"aHex"|"a-Hex"|"Tri"|"Tet"|"Sug"|"Sialic Acid"|"S"|"RES\n1b:x-xgro-NON-x:x\nLIN\n"
-                |"RES\n1b:x-xgro-HEP-x:x\nLIN\n"|"RES\n1b:x-lgal-HEX-x:x|6:d\nLIN\n"
-                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-glycolyl\nLIN\n1:1d(5+1)2n\n"
-                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:n-acetyl\nLIN\n1:1d(5+1)2n\n"
-                |"RES\n1b:x-dgro-dgal-NON-x:x|1:a|2:keto|3:d\n2s:amino\nLIN\n1:1d(5+1)2n\n"|"RES\n1b:x-TRI-x:x\nLIN\n"
-                |"RES\n1b:x-TET-x:x\nLIN\n"|"RES\n1b:x-SUG-x:x\nLIN\n"|"RES\n1b:x-PEN-x:x\nLIN\n"
-                |"RES\n1b:x-OCT-x:x\nLIN\n"|"RES\n1b:x-HEX-x:x|-1:en|-1:a\nLIN\n"|"RES\n1b:x-HEX-x:x|-1:d\nLIN\n"
-                |"RES\n1b:x-HEX-x:x|-1:a\nLIN\n"|"RES\n1b:x-HEX-x:x\nLIN\n"
-                |"RES\n1b:x-HEX-x:x\n2s:sulfate\nLIN\n1:1o(-1+1)2n\n"
-                |"RES\n1b:x-HEX-x:x\n2s:phosphate\nLIN\n1:1o(-1+1)2n\n"
-                |"RES\n1b:x-HEX-x:x\n2s:n-sulfate\nLIN\n1:1d(-1+1)2n\n"
-                |"RES\n1b:x-HEX-x:x\n2s:n-acetyl\nLIN\n1:1d(-1+1)2n\n"
-                |"RES\n1b:x-HEX-x:x\n2s:n-acetyl\n3s:sulfate\nLIN\n1:1d(-1+1)2n\n2:1o(-1+1)3n\n"
-                |"RES\n1b:x-HEX-x:x\n2s:amino\nLIN\n1:1d(-1+1)2n\n"|"RES\n1b:x-DEC-x:x\nLIN\n"|"Pen"|"P"|"Oct"|"Non"
-                |"Neuraminic acid"|"NeuGc"|"NeuAc"|"Neu5Gc"|"Neu5Ac"|"Neu"|"HexS"|"HexP"|"HexNS"|"HexNAc(S)"|"HexNAc"
-                |"HexN"|"HexA"|"Hex"|"Hep"|"Fucose"|"Fuc"|"Dec"|"Aud21122h_5*NCCO/3=O"|"Aud21122h_5*NCC/3=O"
-                |"Aud21122h_5*N"|"?-L-Fucx"|"?-D-Neux5NGc"|"?-D-Neux5NAc"|"?-D-Neux"|"?-?-en,a-Hexx"|"?-?-d-Hexx"
-                |"?-?-a-Hexx"|"?-?-Trix"|"?-?-Tetx"|"?-?-Sugx"|"?-?-Penx"|"?-?-Octx"|"?-?-Nonx"|"?-?-HexxS"|"?-?-HexxP"
-                |"?-?-HexxNS"|"?-?-HexxNAc(S)"|"?-?-HexxNAc"|"?-?-HexxN"|"?-?-Hexx"|"?-?-Hepx"|"?-?-Decx";
-
-ELEMENT = (H,E)|(L,I)|(B,E)|(N,E)|(N,A)|(M,G)|(A,L)|(S,I)|(C,L)|(A,R)|(C,A)|(S,C)|(T,I)|(C,R)|(M,N)|(F,E)|(C,O)|(N,I)
-         |(C,U)|(Z,N)|(G,A)|(G,E)|(A,S)|(S,E)|(B,R)|(K,R)|(R,B)|(S,R)|(Z,R)|(N,B)|(M,O)|(T,C)|(R,U)|(R,H)|(P,D)|(A,G)
-         |(C,D)|(I,N)|(S,N)|(S,B)|(T,E)|(X,E)|(C,S)|(B,A)|(L,A)|(C,E)|(P,R)|(N,D)|(P,M)|(S,M)|(E,U)|(G,D)|(T,B)|(D,Y)
-         |(H,O)|(E,R)|(T,M)|(Y,B)|(L,U)|(H,F)|(T,A)|(R,E)|(O,S)|(I,R)|(P,T)|(A,U)|(H,G)|(T,L)|(P,B)|(B,I)|(P,O)|(A,T)
-         |(R,N)|(F,R)|(R,A)|(A,C)|(T,H)|(P,A)|(N,P)|(P,U)|(A,M)|(C,M)|(B,K)|(C,F)|(E,S)|(F,M)|(M,D)|(N,O)|(L,R)|(R,F)
-         |(D,B)|(S,G)|(B,H)|(H,S)|(M,T)|(D,S)|(R,G)|(C,N)|(N,H)|(F,L)|(M,C)|(L,V)|(T,S)|(O,G)|U|W|I|Y|V|K|S|B|C|N|O|F
-         |H|P;

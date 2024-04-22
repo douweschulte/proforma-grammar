@@ -8,11 +8,6 @@ use crate::generate::generate;
 
 mod generate;
 
-// TODO:
-// * Capitalisation of the glycans is not managed
-// * Look into containing ranges of ambiguous and range mods
-// * Clean up the naming and order of EBNF a bit
-
 fn main() {
     // Parse EBNF
     let mut definition_file = String::new();
