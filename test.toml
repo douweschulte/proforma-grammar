@@ -164,11 +164,14 @@ negative = [
     "{TMT6plex#XL1}AA",
     "{TMT6plex#BRANCH}AA",
 ]
-generate = 10
+# generate = 10
 
 [modGlobal]
 positive = [
     "<[TMT6plex]@K,N-term>",
+    "<[TMT6plex]@K,N-terM>",
+    "<[TMT6plex]@K,n-terM>",
+    "<[TMT6plex]@K,n-tErM>",
     "<[TMT6plex]@K,N-term:A>",
     "<[TMT6plex]@K,N-term:A,N-term:B>",
 ]

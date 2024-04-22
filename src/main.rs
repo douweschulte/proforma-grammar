@@ -9,7 +9,7 @@ use crate::generate::generate;
 mod generate;
 
 // TODO:
-// * Capitalisation of the keywords is not managed
+// * Capitalisation of the glycans is not managed
 
 fn main() {
     // Parse EBNF

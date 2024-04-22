@@ -5,6 +5,32 @@ SIGNEDINT = [SIGN], INT;
 SIGNORSIGNEDINT = SIGNEDINT | SIGN;
 NUMBER = INT, [".", INT];
 SIGNEDNUMBER = [SIGN], INT, [".", INT];
+A = "A"|"a";
+B = "B"|"b";
+C = "C"|"c";
+D = "D"|"d";
+E = "E"|"e";
+F = "F"|"f";
+G = "G"|"g";
+H = "H"|"h";
+I = "I"|"i";
+J = "J"|"j";
+K = "K"|"k";
+L = "L"|"l";
+M = "M"|"m";
+N = "N"|"n";
+O = "O"|"o";
+P = "P"|"p";
+Q = "Q"|"q";
+R = "R"|"r";
+S = "S"|"s";
+T = "T"|"t";
+U = "U"|"u";
+V = "V"|"v";
+W = "W"|"w";
+X = "X"|"x";
+Y = "Y"|"y";
+Z = "Z"|"z";
 LETTER = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"
         |"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z";
 ALPHANUMERIC = LETTER|DIGIT;
@@ -30,15 +56,16 @@ proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
 linearPeptide = peptide, [charge];
 
 peptide = {modUnknownPos}, {modLabile}, [modNTerm], seqElement, {seqElement}, [modCTerm];
-seqElement = aa | modRange | ambiguousAA;
+seqElement = ambiguousAA | modRange | aa;
 
 ambiguousAA = "(?", aa, {aa}, ")";
 aa = AA, {mod | (ModL, modLabel, ModR)};
 AA = LETTER;
 
 modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
-modGlobalOption = "D" | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = ("N-term:", AA) | "N-term" | AA; 
+modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
+modGlobalLocation = (NTERM, ":", AA) | NTERM | AA; 
+NTERM = N, "-", T, E, R, M;
 ISOTOPE = INT, ELEMENT;
 
 modUnknownPos = {mod, ["^", INT]}, '?';
@@ -50,28 +77,28 @@ modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
 modInternalDefined = modSingle, {"|", modSingle};
 modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
 
-modFormula = "Formula:", formula;
+modFormula = F,O,R,M,U,L,A,":", formula;
 formula = WS, formulaElement, {WS, formulaElement}, WS;
 formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR)|(ELEMENT, WS, [SIGNEDINT]);
 
 formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
 formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR)|(elementOrElectron, WS, [SIGNEDINT]);
-elementOrElectron = ELEMENT | "e";
+elementOrElectron = ELEMENT | E;
 
-modGlycan = "Glycan:", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
+modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
 
 modMass = [modMassCV, ":"], SIGNEDNUMBER;
-modMassCV = CVAbbreviationOpt | CVAbbreviation | "Obs";
-CVAbbreviationOpt = "U" | "M";
-CVAbbreviation = "R" | "X" | "G";
+modMassCV = CVAbbreviationOpt | CVAbbreviation | (O,B,S);
+CVAbbreviationOpt = U|M;
+CVAbbreviation = R|X|G;
 
 modAccession = CVName, ":", TEXT;
-CVName = "UNIMOD" | "MOD" | "RESID" | "XLMOD" | "GNO";
+CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
 
 modName = [modNameCV, ":"], TEXT;
 modNameCV = CVAbbreviation | CVAbbreviationOpt;
 
-info = "Info:", TEXT;
+info = I,N,F,O,":", TEXT;
 
 modNTerm = modOrLabel, "-";
 modCTerm = "-", modOrLabel;
@@ -80,8 +107,8 @@ modOrLabel = mod | (ModL, modLabel, ModR);
 modRange = ModRangeL, aa, {aa}, ModRangeR, {mod};
 
 modLabel = "#", (ModLabelXL | ModLabelBranch | ModLabelAmbiguous);
-ModLabelXL = "XL", ALPHANUMERIC, {ALPHANUMERIC};
-ModLabelBranch = "BRANCH";
+ModLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
+ModLabelBranch = B,R,A,N,C,H;
 ModLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 
 charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
@@ -110,9 +137,10 @@ MONOSACCHARIDE = "uxxxxxxxxh"|"uxxxxxxh"|"uxxxxxh"|"uxxxxh_?*OSO/3=O/3=O"|"uxxxx
                 |"?-?-a-Hexx"|"?-?-Trix"|"?-?-Tetx"|"?-?-Sugx"|"?-?-Penx"|"?-?-Octx"|"?-?-Nonx"|"?-?-HexxS"|"?-?-HexxP"
                 |"?-?-HexxNS"|"?-?-HexxNAc(S)"|"?-?-HexxNAc"|"?-?-HexxN"|"?-?-Hexx"|"?-?-Hepx"|"?-?-Decx";
 
-ELEMENT = "He"|"Li"|"Be"|"Ne"|"Na"|"Mg"|"Al"|"Si"|"Cl"|"Ar"|"Ca"|"Sc"|"Ti"|"Cr"|"Mn"|"Fe"|"Co"|"Ni"|"Cu"|"Zn"|"Ga"
-         |"Ge"|"As"|"Se"|"Br"|"Kr"|"Rb"|"Sr"|"Zr"|"Nb"|"Mo"|"Tc"|"Ru"|"Rh"|"Pd"|"Ag"|"Cd"|"In"|"Sn"|"Sb"|"Te"|"Xe"
-         |"Cs"|"Ba"|"La"|"Ce"|"Pr"|"Nd"|"Pm"|"Sm"|"Eu"|"Gd"|"Tb"|"Dy"|"Ho"|"Er"|"Tm"|"Yb"|"Lu"|"Hf"|"Ta"|"Re"|"Os"
-         |"Ir"|"Pt"|"Au"|"Hg"|"Tl"|"Pb"|"Bi"|"Po"|"At"|"Rn"|"Fr"|"Ra"|"Ac"|"Th"|"Pa"|"Np"|"Pu"|"Am"|"Cm"|"Bk"|"Cf"
-         |"Es"|"Fm"|"Md"|"No"|"Lr"|"Rf"|"Db"|"Sg"|"Bh"|"Hs"|"Mt"|"Ds"|"Rg"|"Cn"|"Nh"|"Fl"|"Mc"|"Lv"|"Ts"|"Og"|"U"
-         |"W"|"I"|"Y"|"V"|"K"|"S"|"B"|"C"|"N"|"O"|"F"|"H"|"P";
+ELEMENT = (H,E)|(L,I)|(B,E)|(N,E)|(N,A)|(M,G)|(A,L)|(S,I)|(C,L)|(A,R)|(C,A)|(S,C)|(T,I)|(C,R)|(M,N)|(F,E)|(C,O)|(N,I)
+         |(C,U)|(Z,N)|(G,A)|(G,E)|(A,S)|(S,E)|(B,R)|(K,R)|(R,B)|(S,R)|(Z,R)|(N,B)|(M,O)|(T,C)|(R,U)|(R,H)|(P,D)|(A,G)
+         |(C,D)|(I,N)|(S,N)|(S,B)|(T,E)|(X,E)|(C,S)|(B,A)|(L,A)|(C,E)|(P,R)|(N,D)|(P,M)|(S,M)|(E,U)|(G,D)|(T,B)|(D,Y)
+         |(H,O)|(E,R)|(T,M)|(Y,B)|(L,U)|(H,F)|(T,A)|(R,E)|(O,S)|(I,R)|(P,T)|(A,U)|(H,G)|(T,L)|(P,B)|(B,I)|(P,O)|(A,T)
+         |(R,N)|(F,R)|(R,A)|(A,C)|(T,H)|(P,A)|(N,P)|(P,U)|(A,M)|(C,M)|(B,K)|(C,F)|(E,S)|(F,M)|(M,D)|(N,O)|(L,R)|(R,F)
+         |(D,B)|(S,G)|(B,H)|(H,S)|(M,T)|(D,S)|(R,G)|(C,N)|(N,H)|(F,L)|(M,C)|(L,V)|(T,S)|(O,G)|U|W|I|Y|V|K|S|B|C|N|O|F
+         |H|P;
