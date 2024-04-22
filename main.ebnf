@@ -64,8 +64,9 @@ AA = LETTER;
 
 modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
 modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = (NTERM, ":", AA) | NTERM | AA; 
+modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", AA) | NTERM | AA; 
 NTERM = N, "-", T, E, R, M;
+CTERM = C, "-", T, E, R, M;
 ISOTOPE = INT, ELEMENT;
 
 modUnknownPos = {mod, ["^", INT]}, '?';
