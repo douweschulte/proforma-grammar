@@ -180,7 +180,7 @@ positive = [
 positive = ["0", "1", "12347163101713764196123", "00000000000"]
 negative = ["", "i", "+1", "000o00"]
 
-[aa]
+[sequenceElement]
 positive = ["A", "U", "X", "a", "A[#g1]"]
 negative = ["aa", "Asn", "A[#g1", "A(A)"]
 

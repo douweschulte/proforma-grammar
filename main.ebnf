@@ -1,67 +1,67 @@
 (* Main entry point *)
-proforma = {modGlobal}, {proteoform, CHIMERIC}, proteoform;
-modGlobal = ModGlobalL, modGlobalOption, ModGlobalR;
+proforma = {modGlobal}, {proteoform, "+"}, proteoform;
+modGlobal = "<", modGlobalOption, ">";
 modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", AA) | NTERM | AA; 
+modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", aminoAcid) | NTERM | aminoAcid; 
 NTERM = N, "-", T, E, R, M;
 CTERM = C, "-", T, E, R, M;
 ISOTOPE = INT, ELEMENT;
 
-proteoform = {linearPeptide, CROSSLINK}, linearPeptide;
+(* A single entity that is at some point one molecule *)
+proteoform = {linearPeptide, "//"}, linearPeptide;
 
+(* A single linear sequence of aminoacids *)
 linearPeptide = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm], [charge];
-sequence = seqElement, {seqElement};
-seqElement = ambiguousAA | modRange | aa;
-(* Not specified what can happen inside, based on the modRange I prefer simple AA sequence *)
-ambiguousAA = "(?", aa, {aa}, ")";
+sequence = sequenceSection, {sequenceSection};
+sequenceSection = ambiguousAminoAcid | modRange | sequenceElement;
+(* Not specified what can happen inside, based on the modRange simple AA sequence can be assumed *)
+ambiguousAminoAcid = "(?", sequenceElement, {sequenceElement}, ")";
 (* Defined to be simple sequence inside (technically defined to not be modRange inside) *)
-modRange = "(", aa, {aa}, ")", mod, {mod};
-aa = AA, {mod | (ModL, modLabel, ModR)};
-AA = LETTER;
+modRange = "(", sequenceElement, {sequenceElement}, ")", mod, {mod};
+sequenceElement = aminoAcid, {mod | ("[", modLabel, "]")};
+aminoAcid = LETTER;
 
-modUnknownPos = {mod, ["^", INT]}, '?';
+modUnknownPos = mod, ["^", INT], {mod, ["^", INT]}, '?';
 
-mod = ModL, modInternal, ModR;
-modDefined = ModL, modInternalDefined, ModR;
-modLabile = ModLabileL, modInternalDefined, ModLabileR;
+mod = "[", modInternal, "]";
+modDefined = "[", modInternalDefined, "]";
+modLabile = "{", modInternalDefined, "}";
 modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
 modInternalDefined = modSingle, {"|", modSingle};
 modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
 
 modFormula = F,O,R,M,U,L,A,":", formula;
 formula = WS, formulaElement, {WS, formulaElement}, WS;
-formulaElement = (ModL, WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, ModR)|(ELEMENT, WS, [SIGNEDINT]);
+formulaElement = ("[", WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, "]")|(ELEMENT, WS, [SIGNEDINT]);
 
 formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
-formulaWithElectronsElement = (ModL, WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, ModR)|(elementOrElectron, WS, [SIGNEDINT]);
+formulaWithElectronsElement = ("[", WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, "]")|(elementOrElectron, WS, [SIGNEDINT]);
 elementOrElectron = ELEMENT | E;
 
 modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
 
 (* Defined to need a sign, which is not needed from a parser perspective *)
 modMass = [modMassCV, ":"], SIGN, NUMBER;
-modMassCV = CVAbbreviationOpt | CVAbbreviation | (O,B,S);
-CVAbbreviationOpt = U|M;
-CVAbbreviation = R|X|G;
+modMassCV =  CVAbbreviation | (O,B,S);
+CVAbbreviation = U|M|R|X|G;
 
 modAccession = CVName, ":", TEXT;
 CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
 
-modName = [modNameCV, ":"], TEXT;
-modNameCV = CVAbbreviation | CVAbbreviationOpt;
+modName = [CVAbbreviation, ":"], TEXT;
 
 info = I,N,F,O,":", TEXT;
 
 modNTerm = modOrLabel, "-";
 modCTerm = "-", modOrLabel;
-modOrLabel = mod | (ModL, modLabel, ModR);
+modOrLabel = mod | ("[", modLabel, "]");
 
 modLabel = "#", (modLabelXL | modLabelBranch | modLabelAmbiguous);
 modLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
 modLabelBranch = B,R,A,N,C,H;
 modLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 
-charge = "/", SIGNEDINT, [ModL, adductIon, {",", adductIon}, ModR];
+charge = "/", SIGNEDINT, ["[", adductIon, {",", adductIon}, "]"];
 adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
 
 (* Note that 'NeuAc' and 'NeuGc' are added because 'NeuAc' is used in a example in the spec *)
@@ -83,8 +83,9 @@ INT = DIGIT, {DIGIT};
 SIGN = "+"|"-";
 SIGNEDINT = [SIGN], INT;
 SIGNORSIGNEDINT = SIGNEDINT | SIGN;
+(* Is full floating point used? If so the following can be added: [E, [SIGN], INT, [".", INT]]*)
 NUMBER = INT, [".", INT];
-SIGNEDNUMBER = [SIGN], INT, [".", INT];
+SIGNEDNUMBER = [SIGN], NUMBER;
 A = "A"|"a";
 B = "B"|"b";
 C = "C"|"c";
@@ -113,16 +114,7 @@ Y = "Y"|"y";
 Z = "Z"|"z";
 LETTER = A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z;
 ALPHANUMERIC = LETTER|DIGIT;
-(* Not exhaustively listed all possible characters. Anything unicode graphic not '|', '[', or ']' is possible *)
-GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\";
-TEXT = {GRAPHICCHARACTER}, {ModL, {GRAPHICCHARACTER}, ModR}, {GRAPHICCHARACTER};
-WS = {" "};
-
-CROSSLINK = "//";
-CHIMERIC = "+";
-ModL = "[";
-ModR = "]";
-ModLabileL = "{";
-ModLabileR = "}";
-ModGlobalL = "<";
-ModGlobalR = ">";
+(* Not exhaustively listed all possible characters. Anything unicode graphic not '|', '#', '[', or ']' is possible *)
+GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\\"|"'"|'"'|"*"|"~"|"`"|"@"|"$"|"%"|"^"|"&";
+TEXT = {GRAPHICCHARACTER}, {"[", {GRAPHICCHARACTER}, "]"}, {GRAPHICCHARACTER};
+WS = {" "|"\t"};
