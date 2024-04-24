@@ -42,13 +42,13 @@ modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], 
 
 (* Defined to need a sign, which is not needed from a parser perspective *)
 modMass = [modMassCV, ":"], SIGN, NUMBER;
-modMassCV =  CVAbbreviation | (O,B,S);
+modMassCV =  CVName|CVAbbreviation | (O,B,S);
 CVAbbreviation = U|M|R|X|G;
 
-modAccession = CVName, ":", TEXT;
+modAccession = CVName|CVAbbreviation, ":", TEXT;
 CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
 
-modName = [CVAbbreviation, ":"], TEXT;
+modName = [CVName|CVAbbreviation, ":"], TEXT;
 
 info = I,N,F,O,":", TEXT;
 
