@@ -45,7 +45,7 @@ modMass = [modMassCV, ":"], SIGN, NUMBER;
 modMassCV =  CVName|CVAbbreviation | (O,B,S);
 CVAbbreviation = U|M|R|X|G;
 
-modAccession = CVName|CVAbbreviation, ":", TEXT;
+modAccession = CVName, ":", TEXT;
 CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
 
 modName = [CVName|CVAbbreviation, ":"], TEXT;
