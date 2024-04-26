@@ -45,9 +45,11 @@ modMass = [modMassCV, ":"], SIGN, NUMBER;
 modMassCV =  CVAbbreviation | (O,B,S);
 CVAbbreviation = U|M|R|X|G;
 
-modAccession = CVName, ":", TEXT;
-CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D) | (G,N,O);
+(* An accession number which is a full integer expect when GNO is used *)
+modAccession = (CVName, ":", INT) | (G,N,O,":", ALPHANUMERIC, {ALPHANUMERIC});
+CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D);
 
+(* A named modification *)
 modName = [CVAbbreviation, ":"], TEXT;
 
 info = I,N,F,O,":", TEXT;
