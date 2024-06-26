@@ -8,10 +8,10 @@ CTERM = C, "-", T, E, R, M;
 ISOTOPE = INT, ELEMENT;
 
 (* A single entity that is at some point one molecule *)
-proteoform = {linearPeptide, "//"}, linearPeptide;
+proteoform = {linearPeptide, "//"}, linearPeptide, [charge];
 
 (* A single linear sequence of aminoacids *)
-linearPeptide = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm], [charge];
+linearPeptide = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
 sequence = sequenceSection, {sequenceSection};
 sequenceSection = ambiguousAminoAcid | modRange | sequenceElement;
 (* Not specified what can happen inside, based on the modRange simple AA sequence can be assumed *)
