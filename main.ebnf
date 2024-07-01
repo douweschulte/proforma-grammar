@@ -34,6 +34,9 @@ modFormula = F,O,R,M,U,L,A,":", formula;
 formula = WS, formulaElement, {WS, formulaElement}, WS;
 formulaElement = ("[", WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, "]")|(ELEMENT, WS, [SIGNEDINT]);
 
+(* New charge formula, removes the need for electrons as it specifies the charge directly *)
+chargeFormula = formula, [":", Z, SIGNEDNUMBER];
+
 formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
 formulaWithElectronsElement = ("[", WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, "]")|(elementOrElectron, WS, [SIGNEDINT]);
 elementOrElectron = ELEMENT | E;
@@ -65,6 +68,11 @@ modLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 
 charge = "/", SIGNEDINT, ["[", adductIon, {",", adductIon}, "]"];
 adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
+
+(* New charge carriers, with either a global charge or a list of charge carriers *)
+chargeNew = "/", (SIGNEDINT | chargeCarriers);
+chargeCarriers = "[", chargeCarrierIon, {",", chargeCarrierIon}, "]";
+chargeCarrierIon = chargeFormula, ["^", SIGNEDINT];
 
 (* Note that 'NeuAc' and 'NeuGc' are added because 'NeuAc' is used in a example in the spec *)
 MONOSACCHARIDE = (S,U,L,F,A,T,E)|(P,H,O,S,P,H,A,T,E)|(F,U,C)|(N,E,U,A,C)|(N,E,U,G,C)|(N,E,U,"5",A,C)|(N,E,U,"5",G,C)

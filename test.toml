@@ -237,3 +237,18 @@ positive = [
 
 [modGlycan]
 positive = ["Glycan:Hex2HexNAc"]
+
+[chargeFormula]
+positive = ["Zn:z+2", "Zn1:z2", "Zn1", "Na:Z+1"]
+negative = ["Z:+1", "Nz:Z--z"]
+
+[chargeNew]
+positive = [
+    "/2",
+    "/+2",
+    "/-10101",
+    "/[Na:z+1]",
+    "/[Na:z+1^2]",
+    "/[Na:z+1,Zn:z+2,H:z+1]",
+]
+negative = ["/1/1", "/1[Na]"]
