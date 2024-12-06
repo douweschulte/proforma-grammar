@@ -1,37 +1,40 @@
 (* Main entry point *)
 proforma = compoundPeptidoformIon;
 compoundPeptidoformIon = {modGlobal}, {peptidoformIon, "+"}, peptidoformIon;
+
+(* Global modifications *)
 modGlobal = "<", modGlobalOption, ">";
-modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = (CTERM, ":", aminoAcid) | CTERM | (NTERM, ":", aminoAcid) | NTERM | aminoAcid; 
-NTERM = N, "-", T, E, R, M;
-CTERM = C, "-", T, E, R, M;
-ISOTOPE = INT, ELEMENT;
+modGlobalOption = ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
+ISOTOPE = D | (INT, ELEMENT);
+modGlobalLocation = (C,"-",T,E,R,M, [":", aminoAcid]) | (N,"-",T,E,R,M, [":", aminoAcid]) | aminoAcid; 
 
-(* A single entity that is at some point one molecule *)
-peptidoformIon = {peptidoform, "//"}, peptidoform, [charge];
+(* Peptidoform ion: a single entity that is at some point one molecule *)
+peptidoformIon = {peptidoform, "//"}, peptidoform, [peptidoformCharge];
+peptidoformCharge = "/", (SIGNEDINT, | "[", adductIon, {",", adductIon}, "]");
+adductIon = formula, CHARGE, [occuranceSpecifier];
 
-(* A single linear sequence of aminoacids *)
+(* Peptidoform: a single linear sequence of aminoacids *)
 peptidoform = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
+modUnknownPos = mod, [occuranceSpecifier], {mod, [occuranceSpecifier]}, '?';
+modLabile = "{", modInternalDefined, "}";
+
+(* Main sequence elements *)
 sequence = sequenceSection, {sequenceSection};
 sequenceSection = ambiguousAminoAcid | modRange | sequenceElement;
-(* Not specified what can happen inside, based on the modRange simple AA sequence can be assumed *)
 ambiguousAminoAcid = "(?", sequenceElement, {sequenceElement}, ")";
-(* Defined to be simple sequence inside (technically defined to not be modRange inside) *)
 modRange = "(", sequenceElement, {sequenceElement}, ")", mod, {mod};
-sequenceElement = aminoAcid, {mod | ("[", modLabel, "]")};
+sequenceElement = aminoAcid, {modOrLabel};
 aminoAcid = LETTER;
 
-modUnknownPos = mod, ["^", INT], {mod, ["^", INT]}, '?';
-
+(* Modfications *)
+modOrLabel = mod | ("[", modLabel, "]");
 mod = "[", modInternal, "]";
-modDefined = "[", modInternalDefined, "]";
-modLabile = "{", modInternalDefined, "}";
 modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
+modDefined = "[", modInternalDefined, "]";
 modInternalDefined = modSingle, {"|", modSingle};
 modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
 
-modFormula = F,O,R,M,U,L,A,":", formula, [":", Z, SIGNEDINT];
+modFormula = F,O,R,M,U,L,A,":", formula, [CHARGE];
 formula = WS, formulaElement, {WS, formulaElement}, WS;
 formulaElement = ("[", WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, "]")|(ELEMENT, WS, [SIGNEDINT]);
 
@@ -49,21 +52,23 @@ CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D);
 (* A named modification *)
 modName = [CVAbbreviation, ":"], TEXT;
 
+(* Info tag *)
 info = I,N,F,O,":", TEXT;
 
+(* Terminal modifications *)
 modNTerm = modOrLabel, "-";
 modCTerm = "-", modOrLabel;
-modOrLabel = mod | ("[", modLabel, "]");
 
+(* Possible labels/named modifications *)
 modLabel = "#", (modLabelXL | modLabelBranch | modLabelAmbiguous);
 modLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
 modLabelBranch = B,R,A,N,C,H;
 modLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 
-charge = "/", (SIGNEDINT, | "[", adductIon, {",", adductIon}, "]");
-adductIon = formula, ":", Z, SIGNEDINT, ["^", SIGNEDINT];
+(* Reused syntactic elements *)
+occuranceSpecifier = "^", INT;
+CHARGE = ":", Z, SIGNEDINT;
 
-(* Note that 'NeuAc' and 'NeuGc' are added because 'NeuAc' is used in a example in the spec *)
 MONOSACCHARIDE = (S,U,L,F,A,T,E)|(P,H,O,S,P,H,A,T,E)|(F,U,C)|(N,E,U,A,C)|(N,E,U,G,C)|(N,E,U,"5",A,C)|(N,E,U,"5",G,C)
                 |(N,E,U)|(D,"-",H,E,X)|(E,N,",",A,"-",H,E,X)|(A,"-",H,E,X)|(H,E,X,N,A,C,"(",S,")")|(H,E,X,N,A,C)
                 |(H,E,X,N,S)|(H,E,X,S)|(H,E,X,P)|(H,E,X,N)|(H,E,X)|(S,U,G)|(T,R,I)|(T,E,T)|(P,E,N)|(H,E,P)|(O,C,T)

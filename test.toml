@@ -252,7 +252,7 @@ negative = ["Ht1", "15N1", "15 N 1 H 1", "[15NH3", "Z:+1", "Nz:Z--z"]
 positive = ["Na:z+1", "Na:z+1^2"]
 negative = ["Na:z--1", "Na", "Naz+1", "Na^1"]
 
-[charge]
+[peptidoformCharge]
 positive = [
     "/1",
     "/+1",
