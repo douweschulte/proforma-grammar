@@ -142,11 +142,30 @@ positive = [
     "EMEVEESPEK/2",
     "EM[U:Oxidation]EVEES[U:Phospho]PEK/3",
     "[U:iTRAQ4plex]-EM[U:Oxidation]EVNES[U:Phospho]PEK[U:iTRAQ4plex]-[U:Methyl]/3",
-    "EMEVEESPEK/3[+2Na+,+H+]",
-    "EMEVEESPEK/1[+2Na+,-H+]",
-    "EMEVEESPEK/-2[2I-]",
-    "EMEVEESPEK/-1[+e-]",
     "EMEVEESPEK/2+ELVISLIVER/3",
+    "AA(?AA)",
+    "AA(?AA)AA",
+    "[dehydro]^3?[gln->pyro-glu]-QSC",
+    "[deamidated#1]-FEEAQ[#1]A",
+    "[#1]-FEEAQ[deamidated#1]A",
+    "AHAM[oxidation#1]TEG-[#1]",
+    "AHAM[#1]TEG-[oxidation#1]",
+    "SEQUEN[Formula:Zn1:z+2]CE",
+    "<[TMT6plex]@K,N-term>ATPEILTCNSIGCLK",
+    "<[Oxidation]@W,C-term:G>QATPEILTWCNSIGCLKG",
+    "<[Gln->pyro-Glu]@N-term:Q><[Oxidation]@W,C-term:G>QATPEILTWCNSIGCLKG",
+    "<[Amidated]@C-term>QATPEILTWCNSIGCLKG",
+    "PEPTID-[a-type-ion]",
+    "PEPTID[Formula:H-1C-1O-2|Info:d-ion]-[a-type-ion]",
+    "PEPTIDE/[Na:z+1]",
+    "PEPTIDE/[Na:z+1,H:z+1]",
+    "PEPTIDE/[Na:z+1^2]",
+    "PEPT[Formula:Zn:z+2]IDE/[Na:z+1^2]",
+    "PE[Cation:Al[III]]PTIDE/2",
+    "PE[Formula:Al H-3:z+1]PTIDE/1",
+    "PE[Formula:Al H-3:z+1]PTIDE/[H:z+1]",
+    "[Cation:Al[III]]?PEPTIDE/2",
+    "PEPTIDE/[Al H-3:z+1,H:z+1]",
 ]
 negative = [
     "<D>A[UNIMODIFY:+2]+<D>A",
@@ -163,6 +182,11 @@ negative = [
     "{TMT6plex#g1}AA",
     "{TMT6plex#XL1}AA",
     "{TMT6plex#BRANCH}AA",
+    "AA(?A(A)[+1])AA",
+    "AA(A(?A))[+1]AA",
+    "()[Dehydro]S",
+    "S()[Dehydro]",
+    "AA[+1#xl1]/2//AA[#XL1]",
 ]
 # generate = 10
 
@@ -193,11 +217,17 @@ positive = [
     "[14|Obs:+14|UNIMOD:0034|U:methyl]",
     "[Formula:C-1O-1]",
     "[Glycan:Hex1HexNAc2]",
+    "[Formula:AlH-3:z1]",
+    "[Formula:AlH-3:z+1]",
+    "[Formula:H-1:z-1]",
 ]
 
 [modMass]
 positive = ["+23", "-23.0", "+23.0", "U:+23", "Obs:+23"]
 negative = ["23", "U:23"]
+
+[modFormula]
+positive = ["Formula:Zn:z+2", "Formula:Zn1:z2", "Formula:Na:Z+1"]
 
 [formula]
 positive = [
@@ -214,36 +244,19 @@ positive = [
     "HN-1O2",
     "[13C2][12C-2]H2N",
     "[13C2]C-2H2N",
+    "Zn1",
 ]
-negative = ["Ht1", "15N1", "15 N 1 H 1", "[15NH3"]
+negative = ["Ht1", "15N1", "15 N 1 H 1", "[15NH3", "Z:+1", "Nz:Z--z"]
 
 [adductIon]
-positive = ["+H+", "1H1+1", "+1[1H1]+", "2Fe1+3"]
-negative = ["1 1H1 1", "1H1"]
+positive = ["Na:z+1", "Na:z+1^2"]
+negative = ["Na:z--1", "Na", "Naz+1", "Na^1"]
 
 [charge]
 positive = [
     "/1",
     "/+1",
     "/-1",
-    "/1[+H+]",
-    "/1[-e-]",
-    "/7[2Fe1+3,+H+]",
-    "/7[+2Fe1+3,1H1+1]",
-    "/1[-OH-]",
-    "/1[+N1H3+]",
-    "/1[+[15N1]H3+]",
-]
-
-[modGlycan]
-positive = ["Glycan:Hex2HexNAc"]
-
-[chargeFormula]
-positive = ["Zn:z+2", "Zn1:z2", "Zn1", "Na:Z+1"]
-negative = ["Z:+1", "Nz:Z--z"]
-
-[chargeNew]
-positive = [
     "/2",
     "/+2",
     "/-10101",
@@ -252,3 +265,6 @@ positive = [
     "/[Na:z+1,Zn:z+2,H:z+1]",
 ]
 negative = ["/1/1", "/1[Na]"]
+
+[modGlycan]
+positive = ["Glycan:Hex2HexNAc"]

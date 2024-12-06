@@ -1,17 +1,18 @@
 (* Main entry point *)
-proforma = {modGlobal}, {proteoform, "+"}, proteoform;
+proforma = compoundPeptidoformIon;
+compoundPeptidoformIon = {modGlobal}, {peptidoformIon, "+"}, peptidoformIon;
 modGlobal = "<", modGlobalOption, ">";
 modGlobalOption = D | ISOTOPE | (modDefined, "@", modGlobalLocation, {",", modGlobalLocation});
-modGlobalLocation = (CTERM, ":", AA) | CTERM | (NTERM, ":", aminoAcid) | NTERM | aminoAcid; 
+modGlobalLocation = (CTERM, ":", aminoAcid) | CTERM | (NTERM, ":", aminoAcid) | NTERM | aminoAcid; 
 NTERM = N, "-", T, E, R, M;
 CTERM = C, "-", T, E, R, M;
 ISOTOPE = INT, ELEMENT;
 
 (* A single entity that is at some point one molecule *)
-proteoform = {linearPeptide, "//"}, linearPeptide, [charge];
+peptidoformIon = {peptidoform, "//"}, peptidoform, [charge];
 
 (* A single linear sequence of aminoacids *)
-linearPeptide = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
+peptidoform = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
 sequence = sequenceSection, {sequenceSection};
 sequenceSection = ambiguousAminoAcid | modRange | sequenceElement;
 (* Not specified what can happen inside, based on the modRange simple AA sequence can be assumed *)
@@ -30,16 +31,9 @@ modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
 modInternalDefined = modSingle, {"|", modSingle};
 modSingle = modFormula | modGlycan | modMass | modAccession| info | modName;
 
-modFormula = F,O,R,M,U,L,A,":", formula;
+modFormula = F,O,R,M,U,L,A,":", formula, [":", Z, SIGNEDINT];
 formula = WS, formulaElement, {WS, formulaElement}, WS;
 formulaElement = ("[", WS, INT, WS, ELEMENT, WS, [SIGNEDINT], WS, "]")|(ELEMENT, WS, [SIGNEDINT]);
-
-(* New charge formula, removes the need for electrons as it specifies the charge directly *)
-chargeFormula = formula, [":", Z, SIGNEDNUMBER];
-
-formulaWithElectrons = WS, formulaWithElectronsElement, {WS, formulaWithElectronsElement}, WS;
-formulaWithElectronsElement = ("[", WS, INT, WS, elementOrElectron, WS, [SIGNEDINT], WS, "]")|(elementOrElectron, WS, [SIGNEDINT]);
-elementOrElectron = ELEMENT | E;
 
 modGlycan = G,L,Y,C,A,N,":", MONOSACCHARIDE, [INT], WS, {MONOSACCHARIDE, [INT], WS};
 
@@ -66,13 +60,8 @@ modLabelXL = X,L, ALPHANUMERIC, {ALPHANUMERIC};
 modLabelBranch = B,R,A,N,C,H;
 modLabelAmbiguous = ALPHANUMERIC, {ALPHANUMERIC}, ["(", SIGNEDNUMBER, ")"];
 
-charge = "/", SIGNEDINT, ["[", adductIon, {",", adductIon}, "]"];
-adductIon = SIGNORSIGNEDINT, formulaWithElectrons, SIGN, [INT];
-
-(* New charge carriers, with either a global charge or a list of charge carriers *)
-chargeNew = "/", (SIGNEDINT | chargeCarriers);
-chargeCarriers = "[", chargeCarrierIon, {",", chargeCarrierIon}, "]";
-chargeCarrierIon = chargeFormula, ["^", SIGNEDINT];
+charge = "/", (SIGNEDINT, | "[", adductIon, {",", adductIon}, "]");
+adductIon = formula, ":", Z, SIGNEDINT, ["^", SIGNEDINT];
 
 (* Note that 'NeuAc' and 'NeuGc' are added because 'NeuAc' is used in a example in the spec *)
 MONOSACCHARIDE = (S,U,L,F,A,T,E)|(P,H,O,S,P,H,A,T,E)|(F,U,C)|(N,E,U,A,C)|(N,E,U,G,C)|(N,E,U,"5",A,C)|(N,E,U,"5",G,C)
