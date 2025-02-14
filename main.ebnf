@@ -51,8 +51,8 @@ modName = [CVAbbreviation, ":"], TEXT;
 
 info = I,N,F,O,":", TEXT;
 
-modNTerm = modOrLabel, "-";
-modCTerm = "-", modOrLabel;
+modNTerm = modOrLabel, [modOrLabel], "-";
+modCTerm = "-", modOrLabel, [modOrLabel];
 modOrLabel = mod | ("[", modLabel, "]");
 
 modLabel = "#", (modLabelXL | modLabelBranch | modLabelAmbiguous);
