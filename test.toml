@@ -166,6 +166,8 @@ positive = [
     "PE[Formula:Al H-3:z+1]PTIDE/[H:z+1]",
     "[Cation:Al[III]]?PEPTIDE/2",
     "PEPTIDE/[Al H-3:z+1,H:z+1]",
+    "PEPTIDEG-[Methyl][Oxidation]",
+    "[Acetyl][Gln->pyro-Glu]-QPEPTIDE",
 ]
 negative = [
     "<D>A[UNIMODIFY:+2]+<D>A",

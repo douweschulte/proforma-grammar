@@ -55,9 +55,8 @@ modName = [CVAbbreviation, ":"], TEXT;
 (* Info tag *)
 info = I,N,F,O,":", TEXT;
 
-(* Terminal modifications *)
-modNTerm = modOrLabel, "-";
-modCTerm = "-", modOrLabel;
+modNTerm = modOrLabel, [modOrLabel], "-";
+modCTerm = "-", modOrLabel, [modOrLabel];
 
 (* Possible labels/named modifications *)
 modLabel = "#", (modLabelXL | modLabelBranch | modLabelAmbiguous);
