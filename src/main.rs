@@ -1,7 +1,11 @@
 use std::{io::Read, process::exit};
 
 use colored::Colorize;
-use ebnf::{io::MarkableReader, parser::Parser, Error, Syntax};
+use ebnf::{
+    io::MarkableReader,
+    parser::{Event, Parser},
+    Error, Location, Syntax,
+};
 use toml::{Table, Value};
 
 use crate::generate::generate;
@@ -87,8 +91,9 @@ fn main() {
                         if let Value::String(test) = test {
                             match parser.parse(&mut MarkableReader::new(test, test.as_str().into()))
                             {
-                                Ok(_) => {
+                                Ok(v) => {
                                     println!("   {}: '{test}'", "Negative test failed".red());
+                                    print_match(test, &v);
                                     positive += 1;
                                     failed += 1;
                                 }
@@ -173,4 +178,81 @@ fn show_examples(name: &str, syntax: &Syntax, num: u64) {
         );
     }
     println!();
+}
+
+fn print_match(text: &str, events: &[Event]) {
+    use std::fmt::Write;
+    let mut start_of_line = true;
+    for (index, ch) in text.chars().enumerate() {
+        let mut first = true;
+        let mut already_printed: Vec<&str> = Vec::new();
+        let mut buffer = String::new();
+        let index = index as u64 + 1;
+
+        for e in events {
+            match e {
+                Event::Begin {
+                    location: Location { columns, .. },
+                    label,
+                    ..
+                } if *columns == index
+                    && label.chars().next().is_some_and(|c| c.is_ascii_lowercase())
+                    && !already_printed.contains(&label.as_str()) =>
+                {
+                    write!(
+                        &mut buffer,
+                        "{}{}",
+                        if first { "" } else { ", " },
+                        label.green()
+                    )
+                    .unwrap();
+                    first = false;
+                    already_printed.push(label.as_str());
+                }
+                _ => (),
+            }
+        }
+        if !buffer.is_empty() {
+            if !start_of_line {
+                println!();
+            }
+            println!("┌ {buffer}");
+        }
+        print!("{}", ch.to_string().blue());
+        start_of_line = false;
+
+        buffer.clear();
+        first = true;
+        already_printed.clear();
+        for e in events {
+            match e {
+                Event::End {
+                    location: Location { columns, .. },
+                    label,
+                    ..
+                } if *columns == index + 1
+                    && label.chars().next().is_some_and(|c| c.is_ascii_lowercase())
+                    && !already_printed.contains(&label.as_str()) =>
+                {
+                    write!(
+                        &mut buffer,
+                        "{}{}",
+                        if first { "" } else { ", " },
+                        label.red()
+                    )
+                    .unwrap();
+                    first = false;
+                    already_printed.push(label.as_str());
+                }
+                _ => (),
+            }
+        }
+        if !buffer.is_empty() {
+            if !start_of_line {
+                println!();
+            }
+            println!("└ {buffer}");
+            start_of_line = true;
+        }
+    }
 }

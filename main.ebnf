@@ -1,6 +1,6 @@
 (* Main entry point *)
 proforma = compoundPeptidoformIon;
-compoundPeptidoformIon = {modGlobal}, {peptidoformIon, "+"}, peptidoformIon;
+compoundPeptidoformIon = [nameCompoundPeptidoformIon], {modGlobal}, {peptidoformIon, "+"}, peptidoformIon;
 
 (* Global modifications *)
 modGlobal = "<", modGlobalOption, ">";
@@ -9,13 +9,13 @@ ISOTOPE = D | (INT, ELEMENT);
 modGlobalLocation = (C,"-",T,E,R,M, [":", aminoAcid]) | (N,"-",T,E,R,M, [":", aminoAcid]) | aminoAcid; 
 
 (* Peptidoform ion: a single entity that is at some point one molecule *)
-peptidoformIon = {peptidoform, "//"}, peptidoform, [peptidoformCharge];
+peptidoformIon = [namePeptidoformIon], {peptidoform, "//"}, peptidoform, [peptidoformCharge];
 peptidoformCharge = "/", (SIGNEDINT, | "[", adductIon, {",", adductIon}, "]");
 adductIon = formula, CHARGE, [occuranceSpecifier];
 
 (* Peptidoform: a single linear sequence of aminoacids *)
-peptidoform = {modUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
-modUnknownPos = mod, [occuranceSpecifier], {mod, [occuranceSpecifier]}, '?';
+peptidoform = [namePeptidoform], {globalModUnknownPos}, {modLabile}, [modNTerm], sequence, [modCTerm];
+globalModUnknownPos = mod, [occuranceSpecifier], {mod, [occuranceSpecifier]}, '?';
 modLabile = "{", modInternalDefined, "}";
 
 (* Main sequence elements *)
@@ -25,10 +25,15 @@ ambiguousAminoAcid = "(?", sequenceElement, {sequenceElement}, ")";
 modRange = "(", sequenceElement, {sequenceElement}, ")", mod, {mod};
 sequenceElement = aminoAcid, {modOrLabel};
 aminoAcid = LETTER;
+nameCompoundPeptidoformIon = "(>>>", NAMETEXT, ")";
+namePeptidoformIon = "(>>", NAMETEXT, ")";
+namePeptidoform = "(>", NAMETEXT, ")";
 
 (* Modfications *)
 modOrLabel = mod | ("[", modLabel, "]");
 mod = "[", modInternal, "]";
+modUnknownPos = "[", modSingle, [modLabel], , "]";
+unknownPosSetting = ("|",P,O,S,I,T,I,O,N,":", modGlobalLocation, {",", modGlobalLocation}) | ("|", L,I,M,I,T, ":", INT) | ("|", C,O,M,K,P) | ("|", C,O,M,U,P);
 modInternal = modSingle, [modLabel], {"|", modSingle, [modLabel]};
 modDefined = "[", modInternalDefined, "]";
 modInternalDefined = modSingle, {"|", modSingle};
@@ -50,10 +55,10 @@ modAccession = (CVName, ":", INT) | (G,N,O,":", ALPHANUMERIC, {ALPHANUMERIC});
 CVName = (U,N,I,M,O,D) | (M,O,D) | (R,E,S,I,D) | (X,L,M,O,D);
 
 (* A named modification *)
-modName = [CVAbbreviation, ":"], TEXT;
+modName = [CVAbbreviation, ":"], MODTEXT;
 
 (* Info tag *)
-info = I,N,F,O,":", TEXT;
+info = I,N,F,O,":", MODTEXT;
 
 modNTerm = modOrLabel, [modOrLabel], "-";
 modCTerm = "-", modOrLabel, [modOrLabel];
@@ -117,7 +122,12 @@ Y = "Y"|"y";
 Z = "Z"|"z";
 LETTER = A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z;
 ALPHANUMERIC = LETTER|DIGIT;
-(* Not exhaustively listed all possible characters. Anything unicode graphic not '|', '#', '[', or ']' is possible *)
-GRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\\"|"'"|'"'|"*"|"~"|"`"|"@"|"$"|"%"|"^"|"&";
-TEXT = {GRAPHICCHARACTER}, {"[", {GRAPHICCHARACTER}, "]"}, {GRAPHICCHARACTER};
+(* Not exhaustively listed all possible characters. Anything unicode graphic not '|', '#', '[', or ']' is possible, also an arbitrary number and nesting of internal brackets is allowed, but this EBNF grammar is limited in this capacity *)
+MODGRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"("|")"|"_"|"="|":"|";"|"/"|"\\"|"'"|'"'|"*"|"~"|"`"|"@"|"$"|"%"|"^"|"&";
+MODTEXT = {MODGRAPHICCHARACTER}, {"[", {MODGRAPHICCHARACTER}, "]"}, {MODGRAPHICCHARACTER};
+NAMEGRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|">"|"{"|"}"|"["|"]"|"_"|"="|":"|";"|"/"|"\\"|"'"|'"'|"*"|"~"|"`"|"@"|"$"|"%"|"^"|"&";
+STARTNAMEGRAPHICCHARACTER = ALPHANUMERIC|SIGN|" "|"?"|"."|","|"<"|"{"|"}"|"["|"]"|"_"|"="|":"|";"|"/"|"\\"|"'"|'"'|"*"|"~"|"`"|"@"|"$"|"%"|"^"|"&";
+NAMETEXT = STARTNAMETEXT, NAMETEXTSECTION;
+STARTNAMETEXT = (STARTNAMEGRAPHICCHARACTER) | ("(", NAMETEXTSECTION, ")");
+NAMETEXTSECTION = {NAMEGRAPHICCHARACTER}, {"(", {NAMEGRAPHICCHARACTER}, ")"},{NAMEGRAPHICCHARACTER};
 WS = {" "|"\t"};
